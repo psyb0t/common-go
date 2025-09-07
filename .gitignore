@@ -1,0 +1,6 @@
+.vscode
+test
+.env
+coverage.out
+__pycache__
+http/server/.test/uploads
