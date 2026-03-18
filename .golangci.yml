@@ -114,6 +114,8 @@ linters:
             - github.com/openai/openai-go
             - github.com/cenkalti/backoff
             - github.com/gorilla/websocket
+            - github.com/nats-io/nats.go
+            - google.golang.org/grpc
   exclusions:
     generated: lax
     presets:
