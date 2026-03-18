@@ -17,35 +17,45 @@ type Spec struct {
 	Description      string
 	InfoInstanceName string
 	SwaggerTemplate  string
+	LeftDelim        string
+	RightDelim       string
 }
 
 // ReadDoc parses SwaggerTemplate into swagger document.
 func (i *Spec) ReadDoc() string {
-	i.Description = strings.Replace(i.Description, "\n", "\\n", -1)
+	i.Description = strings.ReplaceAll(i.Description, "\n", "\\n")
 
-	t, err := template.New("swagger_info").Funcs(template.FuncMap{
+	tpl := template.New("swagger_info").Funcs(template.FuncMap{
 		"marshal": func(v interface{}) string {
 			a, _ := json.Marshal(v)
+
 			return string(a)
 		},
 		"escape": func(v interface{}) string {
 			// escape tabs
-			str := strings.Replace(v.(string), "\t", "\\t", -1)
+			var str = strings.ReplaceAll(v.(string), "\t", "\\t")
 			// replace " with \", and if that results in \\", replace that with \\\"
-			str = strings.Replace(str, "\"", "\\\"", -1)
-			return strings.Replace(str, "\\\\\"", "\\\\\\\"", -1)
+			str = strings.ReplaceAll(str, "\"", "\\\"")
+
+			return strings.ReplaceAll(str, "\\\\\"", "\\\\\\\"")
 		},
-	}).Parse(i.SwaggerTemplate)
+	})
+
+	if i.LeftDelim != "" && i.RightDelim != "" {
+		tpl = tpl.Delims(i.LeftDelim, i.RightDelim)
+	}
+
+	parsed, err := tpl.Parse(i.SwaggerTemplate)
 	if err != nil {
 		return i.SwaggerTemplate
 	}
 
-	var tpl bytes.Buffer
-	if err = t.Execute(&tpl, i); err != nil {
+	var doc bytes.Buffer
+	if err = parsed.Execute(&doc, i); err != nil {
 		return i.SwaggerTemplate
 	}
 
-	return tpl.String()
+	return doc.String()
 }
 
 // InstanceName returns Spec instance name.

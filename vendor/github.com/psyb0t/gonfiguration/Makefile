@@ -1,6 +1,6 @@
 MIN_TEST_COVERAGE := 90
 
-all: dep lint test ## Run dep, lint and test
+all: dep lint-fix test-coverage ## Run dep, lint and test
 
 dep: ## Get project dependencies
 	@echo "Getting project dependencies..."
@@ -9,12 +9,12 @@ dep: ## Get project dependencies
 
 lint: ## Lint all Golang files
 	@echo "Linting all Go files..."
-	@go run golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize@latest -test ./...
+	@go tool modernize -test ./...
 	@go tool golangci-lint run --timeout=30m0s ./...
 
 lint-fix: ## Lint all Golang files and fix
 	@echo "Linting all Go files..."
-	@go run golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize@latest -fix -test ./...
+	@go tool modernize -fix -test ./...
 	@go tool golangci-lint run --fix --timeout=30m0s ./...
 
 test: ## Run all tests
