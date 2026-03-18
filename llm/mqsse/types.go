@@ -1,5 +1,5 @@
 //nolint:tagliatelle // snake_case to match SSE format
-package sse
+package mqsse
 
 import "github.com/psyb0t/common-go/llm"
 
