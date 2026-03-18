@@ -85,11 +85,7 @@ func DownloadFiles(ctx context.Context, urlsToTargetPaths map[string]string) err
 	sem := make(chan struct{}, workerLimit)
 
 	for url, targetPath := range urlsToTargetPaths {
-		wg.Add(1)
-
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			sem <- struct{}{}
 
 			defer func() { <-sem }()
@@ -97,7 +93,7 @@ func DownloadFiles(ctx context.Context, urlsToTargetPaths map[string]string) err
 			if err := DownloadFile(ctx, url, targetPath); err != nil {
 				errChan <- ctxerrors.Wrapf(err, "failed to download %s to %s", url, targetPath)
 			}
-		}()
+		})
 	}
 
 	wg.Wait()
