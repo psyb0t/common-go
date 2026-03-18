@@ -1,15 +1,14 @@
-package utils
+package jsonutil
 
 import (
 	"encoding/json"
-
-	"github.com/sirupsen/logrus"
+	"log/slog"
 )
 
 func GetAsJSONBytes(v any) []byte {
 	jsonBytes, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
-		logrus.Warnf("failed to marshal to JSON: %s", err)
+		slog.Warn("failed to marshal to JSON", "error", err)
 
 		return nil
 	}

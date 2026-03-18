@@ -1,4 +1,4 @@
-package utils
+package randutil
 
 import (
 	"math/rand/v2"
@@ -13,8 +13,8 @@ func GetRandomHex(length int) string {
 		maxVal *= 16
 	}
 
-	hexStr := strconv.FormatInt(int64(GetInsecureRandIntN(maxVal)), 16)
-	// Pad with leading zeros to ensure exact length
+	hexStr := strconv.FormatInt(int64(InsecureIntN(maxVal)), 16)
+
 	for len(hexStr) < length {
 		hexStr = "0" + hexStr
 	}
@@ -28,7 +28,7 @@ func GetRandomAlphanumeric(length int) string {
 	result := make([]byte, length)
 
 	for i := range result {
-		result[i] = chars[GetInsecureRandIntN(len(chars))]
+		result[i] = chars[InsecureIntN(len(chars))]
 	}
 
 	return string(result)
@@ -40,7 +40,7 @@ func GetRandomString(length int) string {
 	result := make([]byte, length)
 
 	for i := range result {
-		result[i] = chars[GetInsecureRandIntN(len(chars))]
+		result[i] = chars[InsecureIntN(len(chars))]
 	}
 
 	return string(result)
@@ -48,12 +48,12 @@ func GetRandomString(length int) string {
 
 // GetRandomStringInRange generates a random string with length between min and max.
 func GetRandomStringInRange(minLength, maxLength int) string {
-	length := GetInsecureRandIntN(maxLength-minLength+1) + minLength
+	length := InsecureIntN(maxLength-minLength+1) + minLength
 
 	return GetRandomString(length)
 }
 
-// GetInsecureRandIntN returns a random int in range [0, n) using insecure math/rand.
-func GetInsecureRandIntN(n int) int {
+// InsecureIntN returns a random int in range [0, n) using insecure math/rand.
+func InsecureIntN(n int) int {
 	return rand.IntN(n) //nolint:gosec
 }

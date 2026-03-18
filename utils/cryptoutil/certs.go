@@ -1,4 +1,4 @@
-package utils
+package cryptoutil
 
 import (
 	"crypto/tls"
@@ -27,7 +27,7 @@ func CreateClientCertAndCertPoolFromFiles(
 	}
 
 	if !caCertPool.AppendCertsFromPEM(caCert) {
-		return tls.Certificate{}, nil, ctxerrors.Wrap(err, "failed to append CA certificate to pool")
+		return tls.Certificate{}, nil, ctxerrors.Wrap(ErrAppendCACertFailed, "failed to append CA certificate to pool")
 	}
 
 	return clientCert, caCertPool, nil
@@ -61,7 +61,7 @@ func CreateClientCertAndCertPoolFromBase64(
 	}
 
 	if !caCertPool.AppendCertsFromPEM(caCertBytes) {
-		return tls.Certificate{}, nil, ctxerrors.New("failed to append CA certificate to pool")
+		return tls.Certificate{}, nil, ctxerrors.Wrap(ErrAppendCACertFailed, "failed to append CA certificate to pool")
 	}
 
 	return clientCert, caCertPool, nil

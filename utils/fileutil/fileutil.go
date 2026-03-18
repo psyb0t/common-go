@@ -1,40 +1,35 @@
-package utils
+package fileutil
 
 import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 
 	"github.com/google/uuid"
 	commonerrors "github.com/psyb0t/common-go/errors"
 	"github.com/psyb0t/ctxerrors"
-	"github.com/sirupsen/logrus"
 )
 
 func FileToBase64(inputPath string) (string, error) {
-	// Open the file
 	file, err := os.Open(inputPath)
 	if err != nil {
-		return "", fmt.Errorf("failed to open file: %w", err)
+		return "", ctxerrors.Wrap(err, "failed to open file")
 	}
 
 	defer func() {
 		if err := file.Close(); err != nil {
-			logrus.Errorf("failed to close file: %s", err)
+			slog.Error("failed to close file", "error", err)
 		}
 	}()
 
-	// Read the file contents
 	fileBytes, err := io.ReadAll(file)
 	if err != nil {
-		return "", fmt.Errorf("failed to read file contents: %w", err)
+		return "", ctxerrors.Wrap(err, "failed to read file contents")
 	}
 
-	// Encode the file contents to Base64
-	base64String := base64.StdEncoding.EncodeToString(fileBytes)
-
-	return base64String, nil
+	return base64.StdEncoding.EncodeToString(fileBytes), nil
 }
 
 func GetRandomFilename(extension string) string {
@@ -56,20 +51,29 @@ func PathExists(path string) (bool, error) {
 func ValidatePathExists(path string) error {
 	exists, err := PathExists(path)
 	if err != nil {
-		return ctxerrors.Wrapf(
-			err,
-			"error checking if path exists: %s",
-			path,
-		)
+		return ctxerrors.Wrapf(err, "error checking if path exists: %s", path)
 	}
 
 	if !exists {
-		return ctxerrors.Wrapf(
-			commonerrors.ErrFileNotFound,
-			"path: %s",
-			path,
-		)
+		return ctxerrors.Wrapf(commonerrors.ErrFileNotFound, "path: %s", path)
 	}
 
 	return nil
+}
+
+func CreateTempDir(pattern string) (string, func() error, error) {
+	tempDir, err := os.MkdirTemp("", pattern)
+	if err != nil {
+		return "", nil, ctxerrors.Wrap(err, "failed to create temp dir")
+	}
+
+	cleanupFunc := func() error {
+		if err := os.RemoveAll(tempDir); err != nil {
+			return ctxerrors.Wrap(err, "failed to remove temp dir")
+		}
+
+		return nil
+	}
+
+	return tempDir, cleanupFunc, nil
 }

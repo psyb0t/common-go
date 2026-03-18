@@ -1,4 +1,4 @@
-package utils
+package urlutil
 
 import (
 	"fmt"
@@ -9,17 +9,9 @@ import (
 )
 
 // BuildURI constructs a URI based on the provided parameters.
-// - scheme: "http", "https", "amqp", "amqps", etc.
-// - user: username (optional)
-// - pass: password (optional)
-// - host: host of the server (e.g., "localhost")
-// - port: port (optional)
-// - path: additional path or endpoint (optional)
 func BuildURI(scheme, user, pass, host, port, path string) string {
-	// Initialize the URI string
 	uri := scheme + "://"
 
-	// Handle user and password
 	if user != "" {
 		uriPart := user
 		if pass != "" {
@@ -29,15 +21,12 @@ func BuildURI(scheme, user, pass, host, port, path string) string {
 		uri += uriPart + "@"
 	}
 
-	// Append host
 	uri += host
 
-	// Append port if provided
 	if port != "" {
 		uri += ":" + port
 	}
 
-	// Append path if provided
 	if path != "" {
 		uri += path
 	}
@@ -46,30 +35,22 @@ func BuildURI(scheme, user, pass, host, port, path string) string {
 }
 
 func JoinURLPaths(baseURL string, paths ...string) string {
-	// Ensure we're working with clean paths
 	cleanPaths := make([]string, 0, len(paths))
 
 	for _, path := range paths {
-		// Trim leading and trailing slashes
 		path = strings.Trim(path, "/")
 		if path != "" {
 			cleanPaths = append(cleanPaths, path)
 		}
 	}
 
-	// Trim trailing slash from baseURL if present
 	baseURL = strings.TrimRight(baseURL, "/")
 
-	// If there are no paths to join, just return the baseURL
 	if len(cleanPaths) == 0 {
 		return baseURL
 	}
 
-	// Join the paths with the proper separator
-	joinedPath := strings.Join(cleanPaths, "/")
-
-	// Return the complete URL
-	return baseURL + "/" + joinedPath
+	return baseURL + "/" + strings.Join(cleanPaths, "/")
 }
 
 func GetURLWithParams(baseURL string, params map[string]any) (string, error) {
