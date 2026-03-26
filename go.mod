@@ -17,6 +17,7 @@ require (
 	github.com/swaggo/http-swagger v1.3.4
 	go.temporal.io/api v1.62.4
 	go.temporal.io/sdk v1.41.1
+	golang.org/x/time v0.15.0
 	google.golang.org/grpc v1.79.3
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.31.1
@@ -260,7 +261,6 @@ require (
 	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/text v0.35.0 // indirect
-	golang.org/x/time v0.15.0 // indirect
 	golang.org/x/tools v0.43.0 // indirect
 	golang.org/x/tools/gopls v0.21.1 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260316180232-0b37fe3546d5 // indirect
