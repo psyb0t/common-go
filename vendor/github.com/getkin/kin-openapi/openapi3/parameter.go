@@ -236,7 +236,6 @@ func (parameter *Parameter) UnmarshalJSON(data []byte) error {
 	}
 
 	*parameter = Parameter(x)
-	parameter.Example = stripOriginFromAny(parameter.Example)
 	return nil
 }
 

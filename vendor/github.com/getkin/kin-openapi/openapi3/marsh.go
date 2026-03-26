@@ -3,7 +3,6 @@ package openapi3
 import (
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"strings"
 
 	"github.com/oasdiff/yaml"
@@ -17,7 +16,7 @@ func unmarshalError(jsonUnmarshalErr error) error {
 	return jsonUnmarshalErr
 }
 
-func unmarshal(data []byte, v any, includeOrigin bool, location *url.URL) error {
+func unmarshal(data []byte, v any, includeOrigin bool) error {
 	var jsonErr, yamlErr error
 
 	// See https://github.com/getkin/kin-openapi/issues/680
@@ -26,11 +25,7 @@ func unmarshal(data []byte, v any, includeOrigin bool, location *url.URL) error 
 	}
 
 	// UnmarshalStrict(data, v) TODO: investigate how ymlv3 handles duplicate map keys
-	var file string
-	if location != nil {
-		file = location.Path
-	}
-	if yamlErr = yaml.UnmarshalWithOrigin(data, v, yaml.OriginOpt{Enabled: includeOrigin, File: file}); yamlErr == nil {
+	if yamlErr = yaml.UnmarshalWithOrigin(data, v, includeOrigin); yamlErr == nil {
 		return nil
 	}
 

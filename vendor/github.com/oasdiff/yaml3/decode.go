@@ -320,7 +320,6 @@ type decoder struct {
 
 	knownFields bool
 	origin      bool
-	file        string
 	uniqueKeys  bool
 	decodeCount int
 	aliasCount  int
@@ -753,7 +752,7 @@ func (d *decoder) sequence(n *Node, out reflect.Value) (good bool) {
 	for i := 0; i < l; i++ {
 		e := reflect.New(et).Elem()
 		if d.origin {
-			addOriginInSeq(n.Content[i], d.file)
+			addOriginInSeq(n.Content[i])
 		}
 		if ok := d.unmarshal(n.Content[i], e); ok {
 			out.Index(j).Set(e)
@@ -852,7 +851,7 @@ func (d *decoder) mapping(n *Node, out reflect.Value) (good bool) {
 			e := reflect.New(et).Elem()
 
 			if d.origin {
-				addOriginInMap(n.Content[i], n.Content[i+1], d.file)
+				addOriginInMap(n.Content[i], n.Content[i+1])
 			}
 			if d.unmarshal(n.Content[i+1], e) || n.Content[i+1].ShortTag() == nullTag && (mapIsNew || !out.MapIndex(k).IsValid()) {
 				out.SetMapIndex(k, e)

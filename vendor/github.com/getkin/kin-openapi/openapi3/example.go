@@ -69,7 +69,6 @@ func (example *Example) UnmarshalJSON(data []byte) error {
 		x.Extensions = nil
 	}
 	*example = Example(x)
-	example.Value = stripOriginFromAny(example.Value)
 	return nil
 }
 
