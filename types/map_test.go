@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewMapWithMutex(t *testing.T) {
+func TestNewMap(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
@@ -17,14 +17,14 @@ func TestNewMapWithMutex(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := NewMapWithMutex[string, int]()
+			m := NewMap[string, int]()
 			assert.NotNil(t, m)
 			assert.Equal(t, 0, m.Len())
 		})
 	}
 }
 
-func TestMapWithMutex_Set_Get(t *testing.T) {
+func TestMap_Set_Get(t *testing.T) {
 	tests := []struct {
 		name       string
 		operations []struct {
@@ -79,7 +79,7 @@ func TestMapWithMutex_Set_Get(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := NewMapWithMutex[string, int]()
+			m := NewMap[string, int]()
 
 			for _, op := range tt.operations {
 				m.Set(op.key, op.value)
@@ -94,7 +94,7 @@ func TestMapWithMutex_Set_Get(t *testing.T) {
 	}
 }
 
-func TestMapWithMutex_Delete(t *testing.T) {
+func TestMap_Delete(t *testing.T) {
 	tests := []struct {
 		name            string
 		initialData     map[string]int
@@ -131,7 +131,7 @@ func TestMapWithMutex_Delete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := NewMapWithMutex[string, int]()
+			m := NewMap[string, int]()
 
 			for key, value := range tt.initialData {
 				m.Set(key, value)
@@ -150,7 +150,7 @@ func TestMapWithMutex_Delete(t *testing.T) {
 	}
 }
 
-func TestMapWithMutex_Clear(t *testing.T) {
+func TestMap_Clear(t *testing.T) {
 	tests := []struct {
 		name        string
 		initialData map[string]int
@@ -175,7 +175,7 @@ func TestMapWithMutex_Clear(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := NewMapWithMutex[string, int]()
+			m := NewMap[string, int]()
 
 			for key, value := range tt.initialData {
 				m.Set(key, value)
@@ -194,48 +194,48 @@ func TestMapWithMutex_Clear(t *testing.T) {
 	}
 }
 
-func TestMapWithMutex_Len(t *testing.T) {
+func TestMap_Len(t *testing.T) {
 	tests := []struct {
 		name       string
-		operations []func(*MapWithMutex[string, int])
+		operations []func(*Map[string, int])
 		expectLen  int
 	}{
 		{
 			name:       "empty map",
-			operations: []func(*MapWithMutex[string, int]){},
+			operations: []func(*Map[string, int]){},
 			expectLen:  0,
 		},
 		{
 			name: "single item",
-			operations: []func(*MapWithMutex[string, int]){
-				func(m *MapWithMutex[string, int]) { m.Set("key1", 100) },
+			operations: []func(*Map[string, int]){
+				func(m *Map[string, int]) { m.Set("key1", 100) },
 			},
 			expectLen: 1,
 		},
 		{
 			name: "multiple items",
-			operations: []func(*MapWithMutex[string, int]){
-				func(m *MapWithMutex[string, int]) { m.Set("key1", 100) },
-				func(m *MapWithMutex[string, int]) { m.Set("key2", 200) },
-				func(m *MapWithMutex[string, int]) { m.Set("key3", 300) },
+			operations: []func(*Map[string, int]){
+				func(m *Map[string, int]) { m.Set("key1", 100) },
+				func(m *Map[string, int]) { m.Set("key2", 200) },
+				func(m *Map[string, int]) { m.Set("key3", 300) },
 			},
 			expectLen: 3,
 		},
 		{
 			name: "set and delete",
-			operations: []func(*MapWithMutex[string, int]){
-				func(m *MapWithMutex[string, int]) { m.Set("key1", 100) },
-				func(m *MapWithMutex[string, int]) { m.Set("key2", 200) },
-				func(m *MapWithMutex[string, int]) { m.Delete("key1") },
+			operations: []func(*Map[string, int]){
+				func(m *Map[string, int]) { m.Set("key1", 100) },
+				func(m *Map[string, int]) { m.Set("key2", 200) },
+				func(m *Map[string, int]) { m.Delete("key1") },
 			},
 			expectLen: 1,
 		},
 		{
 			name: "clear all",
-			operations: []func(*MapWithMutex[string, int]){
-				func(m *MapWithMutex[string, int]) { m.Set("key1", 100) },
-				func(m *MapWithMutex[string, int]) { m.Set("key2", 200) },
-				func(m *MapWithMutex[string, int]) { m.Clear() },
+			operations: []func(*Map[string, int]){
+				func(m *Map[string, int]) { m.Set("key1", 100) },
+				func(m *Map[string, int]) { m.Set("key2", 200) },
+				func(m *Map[string, int]) { m.Clear() },
 			},
 			expectLen: 0,
 		},
@@ -243,7 +243,7 @@ func TestMapWithMutex_Len(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := NewMapWithMutex[string, int]()
+			m := NewMap[string, int]()
 
 			for _, op := range tt.operations {
 				op(m)
@@ -254,7 +254,7 @@ func TestMapWithMutex_Len(t *testing.T) {
 	}
 }
 
-func TestMapWithMutex_GenericTypes(t *testing.T) {
+func TestMap_GenericTypes(t *testing.T) {
 	tests := []struct {
 		name string
 		test func(t *testing.T)
@@ -262,7 +262,7 @@ func TestMapWithMutex_GenericTypes(t *testing.T) {
 		{
 			name: "uuid to string mapping",
 			test: func(t *testing.T) {
-				m := NewMapWithMutex[uuid.UUID, string]()
+				m := NewMap[uuid.UUID, string]()
 				id1 := uuid.New()
 				id2 := uuid.New()
 
@@ -286,7 +286,7 @@ func TestMapWithMutex_GenericTypes(t *testing.T) {
 					Value int
 				}
 
-				m := NewMapWithMutex[int, *TestStruct]()
+				m := NewMap[int, *TestStruct]()
 				obj1 := &TestStruct{Name: "test1", Value: 100}
 				obj2 := &TestStruct{Name: "test2", Value: 200}
 
@@ -307,7 +307,7 @@ func TestMapWithMutex_GenericTypes(t *testing.T) {
 		{
 			name: "string to interface mapping",
 			test: func(t *testing.T) {
-				m := NewMapWithMutex[string, any]()
+				m := NewMap[string, any]()
 
 				m.Set("int", 42)
 				m.Set("string", "hello")
@@ -335,7 +335,7 @@ func TestMapWithMutex_GenericTypes(t *testing.T) {
 	}
 }
 
-func TestMapWithMutex_ConcurrentAccess(t *testing.T) {
+func TestMap_ConcurrentAccess(t *testing.T) {
 	tests := []struct {
 		name           string
 		numGoroutines  int
@@ -364,7 +364,7 @@ func TestMapWithMutex_ConcurrentAccess(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := NewMapWithMutex[int, string]()
+			m := NewMap[int, string]()
 			var wg sync.WaitGroup
 
 			for i := 0; i < tt.numGoroutines; i++ {
@@ -394,4 +394,185 @@ func TestMapWithMutex_ConcurrentAccess(t *testing.T) {
 			assert.GreaterOrEqual(t, finalLen, 0)
 		})
 	}
+}
+
+func TestMap_Has(t *testing.T) {
+	m := NewMap[string, int]()
+	m.Set("exists", 42)
+
+	assert.True(t, m.Has("exists"))
+	assert.False(t, m.Has("nope"))
+}
+
+func TestMap_Keys(t *testing.T) {
+	m := NewMap[string, int]()
+	m.Set("a", 1)
+	m.Set("b", 2)
+	m.Set("c", 3)
+
+	keys := m.Keys()
+	assert.Len(t, keys, 3)
+	assert.ElementsMatch(t, []string{"a", "b", "c"}, keys)
+}
+
+func TestMap_Values(t *testing.T) {
+	m := NewMap[string, int]()
+	m.Set("a", 1)
+	m.Set("b", 2)
+
+	values := m.Values()
+	assert.Len(t, values, 2)
+	assert.ElementsMatch(t, []int{1, 2}, values)
+}
+
+func TestMap_Range(t *testing.T) {
+	m := NewMap[string, int]()
+	m.Set("a", 1)
+	m.Set("b", 2)
+	m.Set("c", 3)
+
+	visited := make(map[string]int)
+
+	m.Range(func(k string, v int) bool {
+		visited[k] = v
+
+		return true
+	})
+
+	assert.Len(t, visited, 3)
+	assert.Equal(t, 1, visited["a"])
+	assert.Equal(t, 2, visited["b"])
+	assert.Equal(t, 3, visited["c"])
+}
+
+func TestMap_Range_EarlyStop(t *testing.T) {
+	m := NewMap[int, string]()
+	for i := range 10 {
+		m.Set(i, "val")
+	}
+
+	count := 0
+
+	m.Range(func(_ int, _ string) bool {
+		count++
+
+		return count < 3
+	})
+
+	assert.Equal(t, 3, count)
+}
+
+func TestMap_RangeWithLock(t *testing.T) {
+	m := NewMap[string, int]()
+	m.Set("keep", 1)
+	m.Set("remove", 2)
+	m.Set("also-keep", 3)
+
+	var kept []string
+
+	m.RangeWithLock(func(k string, _ int) bool {
+		if k == "remove" {
+			delete(m.data, k)
+
+			return true
+		}
+
+		kept = append(kept, k)
+
+		return true
+	})
+
+	assert.Equal(t, 2, m.Len())
+	assert.ElementsMatch(t, []string{"keep", "also-keep"}, kept)
+}
+
+func TestMap_DeleteFunc(t *testing.T) {
+	tests := []struct {
+		name          string
+		initial       map[string]int
+		predicate     func(string, int) bool
+		wantDeleted   int
+		wantRemaining int
+	}{
+		{
+			name:    "delete evens",
+			initial: map[string]int{"a": 1, "b": 2, "c": 3, "d": 4},
+			predicate: func(_ string, v int) bool {
+				return v%2 == 0
+			},
+			wantDeleted:   2,
+			wantRemaining: 2,
+		},
+		{
+			name:    "delete none",
+			initial: map[string]int{"a": 1, "b": 3},
+			predicate: func(_ string, v int) bool {
+				return v > 10
+			},
+			wantDeleted:   0,
+			wantRemaining: 2,
+		},
+		{
+			name:    "delete all",
+			initial: map[string]int{"a": 1, "b": 2},
+			predicate: func(_ string, _ int) bool {
+				return true
+			},
+			wantDeleted:   2,
+			wantRemaining: 0,
+		},
+		{
+			name:    "empty map",
+			initial: map[string]int{},
+			predicate: func(_ string, _ int) bool {
+				return true
+			},
+			wantDeleted:   0,
+			wantRemaining: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := NewMap[string, int]()
+			for k, v := range tt.initial {
+				m.Set(k, v)
+			}
+
+			deleted := m.DeleteFunc(tt.predicate)
+
+			assert.Equal(t, tt.wantDeleted, deleted)
+			assert.Equal(t, tt.wantRemaining, m.Len())
+		})
+	}
+}
+
+func TestMap_DeleteFunc_Concurrent(t *testing.T) {
+	m := NewMap[int, bool]()
+	for i := range 100 {
+		m.Set(i, true)
+	}
+
+	var wg sync.WaitGroup
+
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+
+		m.DeleteFunc(func(k int, _ bool) bool {
+			return k%2 == 0
+		})
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		for i := 100; i < 200; i++ {
+			m.Set(i, true)
+		}
+	}()
+
+	wg.Wait()
+	assert.Greater(t, m.Len(), 0)
 }
