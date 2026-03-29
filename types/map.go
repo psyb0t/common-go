@@ -106,20 +106,6 @@ func (m *Map[K, V]) Range(fn func(K, V) bool) {
 	}
 }
 
-// RangeWithLock iterates over all entries under a write lock.
-// Return false from the callback to stop iteration.
-// The callback can safely call Delete on the map.
-func (m *Map[K, V]) RangeWithLock(fn func(K, V) bool) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	for k, v := range m.data {
-		if !fn(k, v) {
-			return
-		}
-	}
-}
-
 // DeleteFunc removes all entries for which the callback returns true.
 // Returns the number of deleted entries.
 func (m *Map[K, V]) DeleteFunc(fn func(K, V) bool) int {

@@ -462,30 +462,6 @@ func TestMap_Range_EarlyStop(t *testing.T) {
 	assert.Equal(t, 3, count)
 }
 
-func TestMap_RangeWithLock(t *testing.T) {
-	m := NewMap[string, int]()
-	m.Set("keep", 1)
-	m.Set("remove", 2)
-	m.Set("also-keep", 3)
-
-	var kept []string
-
-	m.RangeWithLock(func(k string, _ int) bool {
-		if k == "remove" {
-			delete(m.data, k)
-
-			return true
-		}
-
-		kept = append(kept, k)
-
-		return true
-	})
-
-	assert.Equal(t, 2, m.Len())
-	assert.ElementsMatch(t, []string{"keep", "also-keep"}, kept)
-}
-
 func TestMap_DeleteFunc(t *testing.T) {
 	tests := []struct {
 		name          string
