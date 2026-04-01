@@ -9,7 +9,12 @@ const (
 
 	ContentTypeYAML            = "application/x-yaml"
 	ContentTypeJSON            = "application/json"
+	ContentTypeFormURLEncoded  = "application/x-www-form-urlencoded"
 	ContentTypeTextEventStream = "text/event-stream"
 
-	HeaderContentType = "Content-Type"
+	HeaderContentType   = "Content-Type"
+	HeaderAuthorization = "Authorization"
+	HeaderUserAgent     = "User-Agent"
+
+	AuthSchemeBearer = "Bearer "
 )
