@@ -160,7 +160,7 @@ func (p *Postgresql) Close() error {
 func getDSN(cfg Config, usePostgresDatabase bool) string {
 	sslMode := "disable"
 	if cfg.IsSSL {
-		sslMode = "enable"
+		sslMode = "require"
 	}
 
 	dbName := cfg.Database
