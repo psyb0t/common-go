@@ -1,7 +1,9 @@
 package ptrutil
 
+//nolint:gocheckcompilerdirectives // go:fix is valid go fix tooling
+//go:fix inline
 func Of[T any](v T) *T {
-	return &v
+	return new(v)
 }
 
 func ZeroOrVal[T any](ptr *T) T { //nolint:ireturn

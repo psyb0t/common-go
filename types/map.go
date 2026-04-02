@@ -117,6 +117,7 @@ func (m *Map[K, V]) DeleteFunc(fn func(K, V) bool) int {
 	for k, v := range m.data {
 		if fn(k, v) {
 			delete(m.data, k)
+
 			deleted++
 		}
 	}

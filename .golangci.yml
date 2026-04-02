@@ -116,6 +116,7 @@ linters:
             - github.com/gorilla/websocket
             - github.com/nats-io/nats.go
             - google.golang.org/grpc
+            - golang.org/x
   exclusions:
     generated: lax
     presets:
