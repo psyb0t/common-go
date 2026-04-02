@@ -98,15 +98,14 @@ type Usage struct {
 	CacheWrite   int `json:"cache_read_input_tokens,omitempty"`
 }
 
-// ModelUsage tracks per-model token usage across a run.
+// ModelUsage tracks per-model token usage.
 //
 //nolint:tagliatelle // external API uses snake_case
 type ModelUsage struct {
-	Model      string `json:"model"`
-	Input      int    `json:"input_tokens"`
-	Output     int    `json:"output_tokens"`
-	CacheRead  int    `json:"cache_read_input_tokens,omitempty"`
-	CacheWrite int    `json:"cache_creation_input_tokens,omitempty"`
+	Input      int `json:"input_tokens"`
+	Output     int `json:"output_tokens"`
+	CacheRead  int `json:"cache_read_input_tokens,omitempty"`
+	CacheWrite int `json:"cache_creation_input_tokens,omitempty"`
 }
 
 // Iteration is one assistant turn with tool calls and text.
@@ -128,18 +127,18 @@ type ToolUse struct {
 
 //nolint:tagliatelle // external API uses snake_case
 type RunResult struct {
-	Type              string       `json:"type"`
-	Subtype           string       `json:"subtype,omitempty"`
-	IsError           bool         `json:"is_error"`
-	Result            string       `json:"result"`
-	NumTurns          int          `json:"num_turns"`
-	DurationMS        int          `json:"duration_ms"`
-	TotalCost         float64      `json:"total_cost_usd"`
-	SessionID         string       `json:"session_id"`
-	Usage             *Usage       `json:"usage,omitempty"`
-	ModelUsage        []ModelUsage `json:"modelUsage,omitempty"`
-	PermissionDenials []string     `json:"permission_denials,omitempty"`
-	Iterations        []Iteration  `json:"iterations,omitempty"`
+	Type              string                `json:"type"`
+	Subtype           string                `json:"subtype,omitempty"`
+	IsError           bool                  `json:"is_error"`
+	Result            string                `json:"result"`
+	NumTurns          int                   `json:"num_turns"`
+	DurationMS        int                   `json:"duration_ms"`
+	TotalCost         float64               `json:"total_cost_usd"`
+	SessionID         string                `json:"session_id"`
+	Usage             *Usage                `json:"usage,omitempty"`
+	ModelUsage        map[string]ModelUsage `json:"modelUsage,omitempty"`
+	PermissionDenials []string              `json:"permission_denials,omitempty"`
+	Iterations        []Iteration           `json:"iterations,omitempty"`
 }
 
 // FileInfo is the response from file upload operations.
