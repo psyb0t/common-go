@@ -75,46 +75,45 @@ func New(baseURL string, opts ...Option) *Client {
 	return c
 }
 
-//nolint:tagliatelle // external API uses snake_case
 type RunRequest struct {
 	Prompt             string `json:"prompt"`
 	Workspace          string `json:"workspace,omitempty"`
 	Model              string `json:"model,omitempty"`
-	SystemPrompt       string `json:"system_prompt,omitempty"`
-	AppendSystemPrompt string `json:"append_system_prompt,omitempty"`
-	JSONSchema         string `json:"json_schema,omitempty"`
+	SystemPrompt       string `json:"systemPrompt,omitempty"`
+	AppendSystemPrompt string `json:"appendSystemPrompt,omitempty"`
+	JSONSchema         string `json:"jsonSchema,omitempty"`
 	Effort             string `json:"effort,omitempty"`
-	NoContinue         bool   `json:"no_continue,omitempty"`
+	NoContinue         bool   `json:"noContinue,omitempty"`
 	Resume             string `json:"resume,omitempty"`
+	FireAndForget      bool   `json:"fireAndForget,omitempty"`
 }
 
 // Usage holds token usage for a single model call.
-//
-//nolint:tagliatelle // external API uses snake_case
 type Usage struct {
-	InputTokens  int `json:"input_tokens"`
-	OutputTokens int `json:"output_tokens"`
-	CacheRead    int `json:"cache_creation_input_tokens,omitempty"`
-	CacheWrite   int `json:"cache_read_input_tokens,omitempty"`
+	InputTokens         int `json:"inputTokens"`
+	OutputTokens        int `json:"outputTokens"`
+	CacheCreationTokens int `json:"cacheCreationInputTokens,omitempty"`
+	CacheReadTokens     int `json:"cacheReadInputTokens,omitempty"`
 }
 
 // ModelUsage tracks per-model token usage.
 //
-//nolint:tagliatelle // external API uses snake_case
+//nolint:tagliatelle // external API uses non-standard camelCase
 type ModelUsage struct {
-	Input      int `json:"input_tokens"`
-	Output     int `json:"output_tokens"`
-	CacheRead  int `json:"cache_read_input_tokens,omitempty"`
-	CacheWrite int `json:"cache_creation_input_tokens,omitempty"`
+	InputTokens         int     `json:"inputTokens"`
+	OutputTokens        int     `json:"outputTokens"`
+	CacheReadTokens     int     `json:"cacheReadInputTokens,omitempty"`
+	CacheCreationTokens int     `json:"cacheCreationInputTokens,omitempty"`
+	CostUSD             float64 `json:"costUSD,omitempty"`
+	ContextWindow       int     `json:"contextWindow,omitempty"`
+	MaxOutputTokens     int     `json:"maxOutputTokens,omitempty"`
 }
 
 // Iteration is one assistant turn with tool calls and text.
-//
-//nolint:tagliatelle // external API uses snake_case
 type Iteration struct {
-	TurnNumber int             `json:"turn_number"`
+	TurnNumber int             `json:"turnNumber"`
 	Content    json.RawMessage `json:"content"`
-	ToolUses   []ToolUse       `json:"tool_uses,omitempty"`
+	ToolUses   []ToolUse       `json:"toolUses,omitempty"`
 	Usage      *Usage          `json:"usage,omitempty"`
 }
 
@@ -125,19 +124,18 @@ type ToolUse struct {
 	Input json.RawMessage `json:"input"`
 }
 
-//nolint:tagliatelle // external API uses snake_case
 type RunResult struct {
 	Type              string                `json:"type"`
 	Subtype           string                `json:"subtype,omitempty"`
-	IsError           bool                  `json:"is_error"`
+	IsError           bool                  `json:"isError"`
 	Result            string                `json:"result"`
-	NumTurns          int                   `json:"num_turns"`
-	DurationMS        int                   `json:"duration_ms"`
-	TotalCost         float64               `json:"total_cost_usd"`
-	SessionID         string                `json:"session_id"`
+	NumTurns          int                   `json:"numTurns"`
+	DurationMS        int                   `json:"durationMs"`
+	TotalCost         float64               `json:"totalCostUsd"`
+	SessionID         string                `json:"sessionId"`
 	Usage             *Usage                `json:"usage,omitempty"`
 	ModelUsage        map[string]ModelUsage `json:"modelUsage,omitempty"`
-	PermissionDenials []string              `json:"permission_denials,omitempty"`
+	PermissionDenials []string              `json:"permissionDenials,omitempty"`
 	Iterations        []Iteration           `json:"iterations,omitempty"`
 }
 
