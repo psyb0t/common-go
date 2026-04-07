@@ -83,6 +83,7 @@ type RunRequest struct {
 	AppendSystemPrompt string `json:"appendSystemPrompt,omitempty"`
 	JSONSchema         string `json:"jsonSchema,omitempty"`
 	Effort             string `json:"effort,omitempty"`
+	OutputFormat       string `json:"outputFormat,omitempty"`
 	NoContinue         bool   `json:"noContinue,omitempty"`
 	Resume             string `json:"resume,omitempty"`
 	FireAndForget      bool   `json:"fireAndForget,omitempty"`
@@ -124,6 +125,20 @@ type ToolUse struct {
 	Input json.RawMessage `json:"input"`
 }
 
+// VerboseTurn is a single conversation turn from json-verbose output.
+type VerboseTurn struct {
+	Role    string            `json:"role"`
+	Content []json.RawMessage `json:"content"`
+}
+
+// VerboseSystem holds init metadata from json-verbose output.
+type VerboseSystem struct {
+	SessionID string   `json:"sessionId"`
+	Model     string   `json:"model"`
+	Cwd       string   `json:"cwd"`
+	Tools     []string `json:"tools"`
+}
+
 type RunResult struct {
 	Type              string                `json:"type"`
 	Subtype           string                `json:"subtype,omitempty"`
@@ -137,6 +152,8 @@ type RunResult struct {
 	ModelUsage        map[string]ModelUsage `json:"modelUsage,omitempty"`
 	PermissionDenials []string              `json:"permissionDenials,omitempty"`
 	Iterations        []Iteration           `json:"iterations,omitempty"`
+	Turns             []VerboseTurn         `json:"turns,omitempty"`
+	System            *VerboseSystem        `json:"system,omitempty"`
 }
 
 // FileInfo is the response from file upload operations.
