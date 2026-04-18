@@ -113,6 +113,7 @@ linters:
             - github.com/invopop/jsonschema
             - github.com/openai/openai-go
             - github.com/cenkalti/backoff
+            - github.com/redis/
             - github.com/gorilla/websocket
             - github.com/nats-io/nats.go
             - google.golang.org/grpc

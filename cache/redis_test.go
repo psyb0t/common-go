@@ -145,3 +145,84 @@ func TestRedis_Close(t *testing.T) {
 	err := c.Close()
 	require.NoError(t, err)
 }
+
+func TestRedis_KeyPrefix(t *testing.T) {
+	ctx := context.Background()
+
+	container, err := tcredis.Run(
+		ctx, "redis:7-alpine",
+	)
+	if err != nil {
+		t.Skipf("redis container: %v", err)
+	}
+
+	defer func() { _ = container.Terminate(ctx) }()
+
+	connStr, err := container.ConnectionString(ctx)
+	require.NoError(t, err)
+
+	opts, err := redis.ParseURL(connStr)
+	require.NoError(t, err)
+
+	client := redis.NewClient(opts)
+
+	defer func() { _ = client.Close() }()
+
+	c := NewRedisWithPrefix(client, "proxq:")
+
+	err = c.Set(
+		ctx, "mykey", []byte("val"), time.Minute,
+	)
+	require.NoError(t, err)
+
+	got, err := c.Get(ctx, "mykey")
+	require.NoError(t, err)
+	assert.Equal(t, []byte("val"), got)
+
+	rawVal, err := client.Get(
+		ctx, "proxq:cache:mykey",
+	).Bytes()
+	require.NoError(t, err)
+	assert.Equal(t, []byte("val"), rawVal)
+
+	_, err = client.Get(ctx, "mykey").Result()
+	assert.ErrorIs(t, err, redis.Nil)
+
+	_, err = client.Get(ctx, "cache:mykey").Result()
+	assert.ErrorIs(t, err, redis.Nil)
+}
+
+func TestRedis_BuildKey(t *testing.T) {
+	tests := []struct {
+		name     string
+		prefix   string
+		key      string
+		expected string
+	}{
+		{
+			name:     "no prefix",
+			prefix:   "",
+			key:      "foo",
+			expected: "cache:foo",
+		},
+		{
+			name:     "with prefix",
+			prefix:   "proxq:",
+			key:      "bar",
+			expected: "proxq:cache:bar",
+		},
+		{
+			name:     "nested prefix",
+			prefix:   "app:svc:",
+			key:      "key",
+			expected: "app:svc:cache:key",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Redis{keyPrefix: tt.prefix}
+			assert.Equal(t, tt.expected, r.buildKey(tt.key))
+		})
+	}
+}
