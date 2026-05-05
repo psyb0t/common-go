@@ -3,11 +3,13 @@ package commontemporal
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	commonerrors "github.com/psyb0t/common-go/errors"
 	"github.com/psyb0t/ctxerrors"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/api/serviceerror"
+	"go.temporal.io/api/workflowservice/v1"
 )
 
 const (
@@ -58,6 +60,50 @@ func (w *Workflow) GetResult(
 	}
 
 	return nil
+}
+
+// IsRunning returns true if the workflow is currently in RUNNING state.
+// Returns false (no error) if the workflow doesn't exist — useful as a gate
+// where "not found" and "not running" are equivalent.
+func (w *Workflow) IsRunning(ctx context.Context) (bool, error) {
+	status, _, err := w.GetStatus(ctx)
+	if err != nil {
+		if errors.Is(err, commonerrors.ErrNotFound) {
+			return false, nil
+		}
+
+		return false, ctxerrors.Wrap(err, "failed to get workflow status")
+	}
+
+	return status == enums.WORKFLOW_EXECUTION_STATUS_RUNNING, nil
+}
+
+// IsWorkflowTypeRunning returns true if any workflow of the given type is
+// currently running. Use when the workflow ID is dynamic (random/per-run)
+// and only the type is stable. Backed by the visibility store, which is
+// eventually consistent — typically <1s lag, so a workflow that just started
+// may not be visible immediately.
+func (c *Client) IsWorkflowTypeRunning(
+	ctx context.Context, workflowType string,
+) (bool, error) {
+	query := fmt.Sprintf(
+		`WorkflowType=%q AND ExecutionStatus=%q`,
+		workflowType, "Running",
+	)
+
+	resp, err := c.C.ListWorkflow(
+		ctx, &workflowservice.ListWorkflowExecutionsRequest{
+			Query:    query,
+			PageSize: 1,
+		},
+	)
+	if err != nil {
+		return false, ctxerrors.Wrapf(
+			err, "list workflows by type %q", workflowType,
+		)
+	}
+
+	return len(resp.GetExecutions()) > 0, nil
 }
 
 func (w *Workflow) IsCompletedSuccessfully(ctx context.Context) (bool, error) {
