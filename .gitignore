@@ -5,3 +5,5 @@ coverage.out
 __pycache__
 http/server/.test/uploads
 .unmerged
+git-update.sh
+CLAUDE.md
