@@ -2,6 +2,10 @@
 
 All notable changes per release. Versions follow [semver](https://semver.org).
 
+## v0.1.3 — 2026-07-27
+
+Update golang.org/x/text and other dependencies to patched versions (resolves govulncheck findings).
+
 ## v0.1.2 — 2026-07-27
 
 Modernize to Go 1.26 + house lint/logging/error conventions.
