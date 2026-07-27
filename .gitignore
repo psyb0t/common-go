@@ -2,6 +2,8 @@
 test
 .env
 coverage.out
+coverage.txt
+coverage-percent.txt
 __pycache__
 http/server/.test/uploads
 .unmerged

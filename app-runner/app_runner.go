@@ -3,6 +3,7 @@ package runner
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"os"
 	"os/signal"
 	"sync"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/psyb0t/ctxerrors"
 	"github.com/psyb0t/gonfiguration"
-	"github.com/sirupsen/logrus"
 )
 
 var ErrShutdownTimeout = errors.New("shutdown timeout")
@@ -96,7 +96,7 @@ func (r *appRunner) runApp(ctx context.Context, wg *sync.WaitGroup, errCh chan e
 	defer wg.Done()
 	defer close(errCh)
 
-	logrus.Info("starting application...")
+	slog.Info("starting application")
 
 	errCh <- r.runnable.Run(ctx)
 }
@@ -104,12 +104,12 @@ func (r *appRunner) runApp(ctx context.Context, wg *sync.WaitGroup, errCh chan e
 func (r *appRunner) waitForShutdown(sigCh chan os.Signal, errCh chan error) error {
 	select {
 	case sig := <-sigCh:
-		logrus.Infof("received signal: %v", sig)
+		slog.Info("received signal", "signal", sig)
 
 		return nil
 	case err := <-errCh:
 		if err != nil {
-			logrus.Errorf("application encountered an error: %v", err)
+			slog.Error("application encountered an error", "err", err)
 		}
 
 		return err
@@ -117,7 +117,7 @@ func (r *appRunner) waitForShutdown(sigCh chan os.Signal, errCh chan error) erro
 }
 
 func (r *appRunner) performGracefulShutdown(ctx context.Context, wg *sync.WaitGroup, shutdownErr error) error {
-	logrus.Info("initiating graceful shutdown...")
+	slog.Info("initiating graceful shutdown")
 
 	// Create shutdown context with timeout
 	shutdownCtx, cancel := context.WithTimeout(ctx, r.shutdownTimeout)
@@ -151,7 +151,7 @@ func (r *appRunner) performGracefulShutdown(ctx context.Context, wg *sync.WaitGr
 		err := shutdownCtx.Err()
 		if err != nil {
 			if errors.Is(err, context.DeadlineExceeded) {
-				logrus.Error(ErrShutdownTimeout.Error())
+				slog.Error("shutdown timed out", "err", ErrShutdownTimeout)
 
 				return ErrShutdownTimeout
 			}
@@ -164,7 +164,7 @@ func (r *appRunner) performGracefulShutdown(ctx context.Context, wg *sync.WaitGr
 		}
 
 	case <-doneCh:
-		logrus.Info("shutdown completed successfully")
+		slog.Info("shutdown completed successfully")
 	}
 
 	return shutdownErr

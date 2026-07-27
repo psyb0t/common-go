@@ -23,6 +23,14 @@ const WaitForWorkflowTypeClearActivityName = "CommonTemporal_WaitForWorkflowType
 // lose the timer.
 var ErrWorkflowTypeRunning = errors.New("workflow of given type is still running")
 
+const (
+	defaultStartToCloseTimeout = 30 * time.Second
+	defaultInitialInterval     = 5 * time.Minute
+	defaultBackoffCoefficient  = 2.0
+	defaultMaximumInterval     = 15 * time.Minute
+	defaultMaximumAttempts     = 4
+)
+
 // WaitForWorkflowTypeClearConfig shapes the wait strategy. Each "retry" is
 // the Temporal-scheduled gap between activity attempts. Defaults give:
 // 5min, 10min, 15min, 15min — total ~45min wait across 4 attempts before
@@ -37,23 +45,23 @@ type WaitForWorkflowTypeClearConfig struct {
 
 func (c *WaitForWorkflowTypeClearConfig) applyDefaults() {
 	if c.StartToCloseTimeout == 0 {
-		c.StartToCloseTimeout = 30 * time.Second
+		c.StartToCloseTimeout = defaultStartToCloseTimeout
 	}
 
 	if c.InitialInterval == 0 {
-		c.InitialInterval = 5 * time.Minute
+		c.InitialInterval = defaultInitialInterval
 	}
 
 	if c.BackoffCoefficient == 0 {
-		c.BackoffCoefficient = 2.0
+		c.BackoffCoefficient = defaultBackoffCoefficient
 	}
 
 	if c.MaximumInterval == 0 {
-		c.MaximumInterval = 15 * time.Minute
+		c.MaximumInterval = defaultMaximumInterval
 	}
 
 	if c.MaximumAttempts == 0 {
-		c.MaximumAttempts = 4
+		c.MaximumAttempts = defaultMaximumAttempts
 	}
 }
 
