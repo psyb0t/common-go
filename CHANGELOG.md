@@ -2,6 +2,16 @@
 
 All notable changes per release. Versions follow [semver](https://semver.org).
 
+## v0.2.1 — 2026-07-31
+
+- Upgraded `google.golang.org/grpc` from v1.79.3 to v1.82.1, resolving
+  [GO-2026-6061](https://pkg.go.dev/vuln/GO-2026-6061). The vulnerable code was
+  reachable from `temporal/client.go`, `temporal/workflow.go` and
+  `utils/cryptoutil/certs.go`, so `govulncheck` failed the build rather than
+  merely reporting it. Pulls `go.opentelemetry.io/otel` to v1.43.0 and the
+  `genproto` API/RPC modules forward as transitive requirements; `vendor/` is
+  regenerated to match.
+
 ## v0.2.0 — 2026-07-31
 
 New `scope` package, which absorbs the `slogging` context logger.
