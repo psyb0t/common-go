@@ -9,3 +9,4 @@ http/server/.test/uploads
 .unmerged
 git-update.sh
 CLAUDE.md
+.telemetry/
