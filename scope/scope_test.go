@@ -26,7 +26,7 @@ func loggedPairs(
 
 	buf := &bytes.Buffer{}
 	logger := slog.New(slog.NewJSONHandler(buf, nil))
-	ctx := GetCtxWithLogger(context.Background(), logger)
+	ctx := withLogger(context.Background(), logger)
 
 	GetLogger(fn(ctx)).Info(testLogMessage)
 
@@ -290,10 +290,10 @@ func TestSet_KeepsTheContextLoggerInSync(t *testing.T) {
 		{
 			name: "attrs already on the logger survive scope churn",
 			build: func(ctx context.Context) context.Context {
-				ctx = GetCtxWithLogger(
+				ctx = withLogger(
 					ctx,
-					GetLogger(ctx).With("commit", "deadbeef"),
-				)
+					GetLogger(ctx).With("commit", "deadbeef"))
+
 				ctx = Set(ctx, Attr("request_id", "abc"))
 
 				return Remove(ctx, "request_id")
@@ -425,7 +425,7 @@ func TestSet_LeavesTheBaseLoggerUntouched(t *testing.T) {
 	buf := &bytes.Buffer{}
 	base := slog.New(slog.NewJSONHandler(buf, nil)).With("commit", "deadbeef")
 
-	ctx := GetCtxWithLogger(context.Background(), base)
+	ctx := withLogger(context.Background(), base)
 	ctx = Set(ctx, Attr("request_id", "abc"))
 	ctx = Remove(ctx, "request_id")
 	ctx = Set(ctx, Attr("user_id", 42))
@@ -453,10 +453,10 @@ func TestGetLogger_HeldLoggerDoesNotSeeLaterChanges(t *testing.T) {
 	t.Parallel()
 
 	buf := &bytes.Buffer{}
-	ctx := GetCtxWithLogger(
+	ctx := withLogger(
 		context.Background(),
-		slog.New(slog.NewJSONHandler(buf, nil)),
-	)
+		slog.New(slog.NewJSONHandler(buf, nil)))
+
 	ctx = Set(ctx, Attr("user_id", 42))
 
 	held := GetLogger(ctx)

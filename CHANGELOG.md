@@ -2,6 +2,24 @@
 
 All notable changes per release. Versions follow [semver](https://semver.org).
 
+## v0.3.0 — 2026-07-31
+
+- **Breaking.** `scope.GetCtxWithLogger` is removed. It pinned the logger that
+  scoped loggers are built from, and outside this package's own tests nothing
+  called it: `GetLogger` builds from `slog.Default()`, which is where slog
+  configuration and any installed handler already live, so a context needs no
+  preparation before `Set` or `GetLogger` work on it. The capability survives as
+  an unexported helper the tests use to capture output per test without
+  `slog.SetDefault` racing across `t.Parallel`.
+
+  **This supersedes the migration note in v0.2.0 below**, which pointed
+  `slogging.GetCtxWithLogger` at `scope.GetCtxWithLogger`. If you need to pin a
+  logger to a single context rather than the process, configure the handler on
+  `slog.Default()` at startup instead.
+
+  The exported surface is now `Set` / `Remove` / `Get`, `SetGlobal` /
+  `RemoveGlobal` / `GetGlobal`, `GetLogger`, `ToJSON` / `FromJSON` and `Attr`.
+
 ## v0.2.1 — 2026-07-31
 
 - Upgraded `google.golang.org/grpc` from v1.79.3 to v1.82.1, resolving

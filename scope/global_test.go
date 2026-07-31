@@ -31,10 +31,9 @@ func TestSetGlobal_AppliesToEveryLogLine(t *testing.T) {
 	assert.Equal(t, Scope{"commit": "deadbeef"}, GetGlobal())
 
 	buf := &bytes.Buffer{}
-	ctx := GetCtxWithLogger(
+	ctx := withLogger(
 		context.Background(),
-		slog.New(slog.NewJSONHandler(buf, nil)),
-	)
+		slog.New(slog.NewJSONHandler(buf, nil)))
 
 	GetLogger(ctx).Info(testLogMessage)
 
@@ -47,10 +46,10 @@ func TestSetGlobal_ContextTierWinsOnCollision(t *testing.T) {
 	setGlobalForTest(t, "env", "from-global")
 
 	buf := &bytes.Buffer{}
-	ctx := GetCtxWithLogger(
+	ctx := withLogger(
 		context.Background(),
-		slog.New(slog.NewJSONHandler(buf, nil)),
-	)
+		slog.New(slog.NewJSONHandler(buf, nil)))
+
 	ctx = Set(ctx, Attr("env", "from-context"))
 
 	GetLogger(ctx).Info(testLogMessage)

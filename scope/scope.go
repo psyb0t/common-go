@@ -101,18 +101,12 @@ func Remove(ctx context.Context, keys ...string) context.Context {
 	return context.WithValue(ctx, scopeKey{}, next)
 }
 
-// GetCtxWithLogger sets the logger scoped loggers are built from. Rarely
-// needed: the default base is slog.Default(). Reach for it when a logger must
-// be scoped to one context rather than the process, as a parallel test
-// capturing its own output needs.
-func GetCtxWithLogger(
-	ctx context.Context,
-	logger *slog.Logger,
-) context.Context {
-	if ctx == nil {
-		ctx = context.Background()
-	}
-
+// withLogger pins the logger scoped loggers are built from, instead of the
+// process default. Unexported because callers have no reason to: GetLogger
+// builds from slog.Default(), which is where slog configuration and any
+// installed handler already live. Only this package's own tests need it, to
+// capture output per test without slog.SetDefault racing across t.Parallel.
+func withLogger(ctx context.Context, logger *slog.Logger) context.Context {
 	return context.WithValue(ctx, loggerKey{}, logger)
 }
 
