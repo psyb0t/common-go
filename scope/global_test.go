@@ -1,10 +1,8 @@
 package scope
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"log/slog"
 	"sync"
 	"testing"
 
@@ -30,12 +28,9 @@ func TestSetGlobal_AppliesToEveryLogLine(t *testing.T) {
 
 	assert.Equal(t, Scope{"commit": "deadbeef"}, GetGlobal())
 
-	buf := &bytes.Buffer{}
-	ctx := withLogger(
-		context.Background(),
-		slog.New(slog.NewJSONHandler(buf, nil)))
+	buf := captureDefault(t)
 
-	GetLogger(ctx).Info(testLogMessage)
+	GetLogger(context.Background()).Info(testLogMessage)
 
 	var record map[string]any
 	require.NoError(t, json.Unmarshal(buf.Bytes(), &record))
@@ -45,12 +40,9 @@ func TestSetGlobal_AppliesToEveryLogLine(t *testing.T) {
 func TestSetGlobal_ContextTierWinsOnCollision(t *testing.T) {
 	setGlobalForTest(t, "env", "from-global")
 
-	buf := &bytes.Buffer{}
-	ctx := withLogger(
-		context.Background(),
-		slog.New(slog.NewJSONHandler(buf, nil)))
+	buf := captureDefault(t)
 
-	ctx = Set(ctx, Attr("env", "from-context"))
+	ctx := Set(context.Background(), Attr("env", "from-context"))
 
 	GetLogger(ctx).Info(testLogMessage)
 

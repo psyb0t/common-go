@@ -24,8 +24,6 @@ import (
 
 type scopeKey struct{}
 
-type loggerKey struct{}
-
 // attrPairWidth is the key and value each attribute takes in a flattened slice.
 const attrPairWidth = 2
 
@@ -101,17 +99,9 @@ func Remove(ctx context.Context, keys ...string) context.Context {
 	return context.WithValue(ctx, scopeKey{}, next)
 }
 
-// withLogger pins the logger scoped loggers are built from, instead of the
-// process default. Unexported because callers have no reason to: GetLogger
-// builds from slog.Default(), which is where slog configuration and any
-// installed handler already live. Only this package's own tests need it, to
-// capture output per test without slog.SetDefault racing across t.Parallel.
-func withLogger(ctx context.Context, logger *slog.Logger) context.Context {
-	return context.WithValue(ctx, loggerKey{}, logger)
-}
-
-// GetLogger returns ctx's logger with both tiers applied, sorted by key, the
-// context tier winning collisions.
+// GetLogger returns slog.Default() with both tiers applied, sorted by key, the
+// context tier winning collisions. The context carries attributes, never a
+// logger — where output goes is slog's business, configured once at startup.
 //
 // Call it where you log rather than holding the result: a logger is a value, so
 // one fetched before a Set or Remove keeps the attributes it was built with.
@@ -119,15 +109,7 @@ func GetLogger(ctx context.Context) *slog.Logger {
 	merged := GetGlobal()
 	maps.Copy(merged, Get(ctx))
 
-	return baseLogger(ctx).With(flatten(merged)...)
-}
-
-func baseLogger(ctx context.Context) *slog.Logger {
-	if logger, ok := ctx.Value(loggerKey{}).(*slog.Logger); ok {
-		return logger
-	}
-
-	return slog.Default()
+	return slog.Default().With(flatten(merged)...)
 }
 
 // ToJSON marshals ctx's scope for an outbound header, queue message or

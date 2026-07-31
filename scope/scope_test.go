@@ -13,22 +13,37 @@ import (
 
 const testLogMessage = "test"
 
-// loggedPairs runs fn against a context whose logger writes JSON to a buffer,
-// emits one line, and returns its attributes as ordered key/value pairs.
-// Ordered pairs rather than a map because json.Unmarshal into a map silently
-// collapses duplicate keys — which is exactly the bug this package must not
-// have.
+// captureDefault points slog.Default() at a buffer for the duration of one
+// test and restores it afterwards. Callers must NOT be parallel: the default
+// logger is process-wide, so two tests swapping it at once would each read the
+// other's output.
+func captureDefault(t *testing.T) *bytes.Buffer {
+	t.Helper()
+
+	buf := &bytes.Buffer{}
+	previous := slog.Default()
+
+	slog.SetDefault(slog.New(slog.NewJSONHandler(buf, nil)))
+	t.Cleanup(func() {
+		slog.SetDefault(previous)
+	})
+
+	return buf
+}
+
+// loggedPairs runs fn against a context, emits one line, and returns its
+// attributes as ordered key/value pairs. Ordered pairs rather than a map
+// because json.Unmarshal into a map silently collapses duplicate keys — which
+// is exactly the bug this package must not have.
 func loggedPairs(
 	t *testing.T,
 	fn func(ctx context.Context) context.Context,
 ) [][2]string {
 	t.Helper()
 
-	buf := &bytes.Buffer{}
-	logger := slog.New(slog.NewJSONHandler(buf, nil))
-	ctx := withLogger(context.Background(), logger)
+	buf := captureDefault(t)
 
-	GetLogger(fn(ctx)).Info(testLogMessage)
+	GetLogger(fn(context.Background())).Info(testLogMessage)
 
 	decoder := json.NewDecoder(bytes.NewReader(buf.Bytes()))
 
@@ -231,12 +246,12 @@ func TestToJSON(t *testing.T) {
 	}
 }
 
-// The ctx logger is not incidental output here — keeping it in sync with the
-// map is the package's whole contract, so the emitted attrs are the side
-// effect worth asserting on.
-func TestSet_KeepsTheContextLoggerInSync(t *testing.T) {
-	t.Parallel()
-
+// The emitted attrs are not incidental output here — what GetLogger puts on a
+// line is the package's whole contract, so that is the side effect worth
+// asserting on.
+//
+// Not parallel, here or in the subtests: loggedPairs swaps slog.Default().
+func TestSet_KeepsTheLoggedAttrsInSync(t *testing.T) {
 	testCases := []struct {
 		name  string
 		build func(ctx context.Context) context.Context
@@ -287,27 +302,10 @@ func TestSet_KeepsTheContextLoggerInSync(t *testing.T) {
 				{"request_id", `"abc"`},
 			},
 		},
-		{
-			name: "attrs already on the logger survive scope churn",
-			build: func(ctx context.Context) context.Context {
-				ctx = withLogger(
-					ctx,
-					GetLogger(ctx).With("commit", "deadbeef"))
-
-				ctx = Set(ctx, Attr("request_id", "abc"))
-
-				return Remove(ctx, "request_id")
-			},
-			want: [][2]string{
-				{"commit", `"deadbeef"`},
-			},
-		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
 			assert.Equal(t, tc.want, loggedPairs(t, tc.build))
 		})
 	}
@@ -375,9 +373,9 @@ func TestFromJSON(t *testing.T) {
 // The round trip is what crosses a process boundary: ToJSON on the sending
 // side, FromJSON on the receiving one. Numbers come back as float64 — JSON has
 // one number type — so this pins that down rather than pretending otherwise.
+// Not parallel: the log-equivalence half calls loggedPairs, which swaps
+// slog.Default().
 func TestToJSON_FromJSON_RoundTrip(t *testing.T) {
-	t.Parallel()
-
 	ctx := Set(context.Background(), Attr("request_id", "abc"))
 	ctx = Set(ctx, Attr("user_id", 42))
 	ctx = Set(ctx, Attr("retry", true))
@@ -419,22 +417,25 @@ func TestToJSON_FromJSON_RoundTrip(t *testing.T) {
 // what lets Remove work at all — slog has no way to un-apply an attribute
 // already baked into a logger — and what stops a re-Set key being emitted
 // twice. Everything is applied at read time, by GetLogger.
-func TestSet_LeavesTheBaseLoggerUntouched(t *testing.T) {
-	t.Parallel()
+//
+// Not parallel: swaps slog.Default().
+func TestSet_LeavesTheDefaultLoggerUntouched(t *testing.T) {
+	buf := captureDefault(t)
 
-	buf := &bytes.Buffer{}
-	base := slog.New(slog.NewJSONHandler(buf, nil)).With("commit", "deadbeef")
+	// Whatever the default logger carries is the base every scoped logger
+	// builds on, and scope must never disturb it.
+	slog.SetDefault(slog.Default().With("commit", "deadbeef"))
+	base := slog.Default()
 
-	ctx := withLogger(context.Background(), base)
-	ctx = Set(ctx, Attr("request_id", "abc"))
+	ctx := Set(context.Background(), Attr("request_id", "abc"))
 	ctx = Remove(ctx, "request_id")
 	ctx = Set(ctx, Attr("user_id", 42))
 
 	// Same pointer after all that churn: nothing rebuilt or replaced it.
-	assert.Same(t, base, baseLogger(ctx))
+	assert.Same(t, base, slog.Default())
 
 	// And logging through it directly emits only what IT carries.
-	baseLogger(ctx).Info(testLogMessage)
+	slog.Default().Info(testLogMessage)
 
 	var record map[string]any
 	require.NoError(t, json.Unmarshal(buf.Bytes(), &record))
@@ -449,15 +450,12 @@ func TestSet_LeavesTheBaseLoggerUntouched(t *testing.T) {
 // A logger is a value: one fetched before a scope change keeps the attributes
 // it was built with. This is why the convention is to call GetLogger at the
 // point you log rather than holding one in a struct field.
+//
+// Not parallel: swaps slog.Default().
 func TestGetLogger_HeldLoggerDoesNotSeeLaterChanges(t *testing.T) {
-	t.Parallel()
+	buf := captureDefault(t)
 
-	buf := &bytes.Buffer{}
-	ctx := withLogger(
-		context.Background(),
-		slog.New(slog.NewJSONHandler(buf, nil)))
-
-	ctx = Set(ctx, Attr("user_id", 42))
+	ctx := Set(context.Background(), Attr("user_id", 42))
 
 	held := GetLogger(ctx)
 	ctx = Remove(ctx, "user_id")

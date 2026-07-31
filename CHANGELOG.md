@@ -2,6 +2,24 @@
 
 All notable changes per release. Versions follow [semver](https://semver.org).
 
+## v0.3.1 — 2026-07-31
+
+No change to the exported API — `scope`'s surface is byte-for-byte what `v0.3.0`
+shipped.
+
+- **A context now carries attributes and never a logger.** `v0.3.0` removed the
+  exported `GetCtxWithLogger` but kept the mechanism as an unexported helper for
+  the tests; that helper and the context key behind it are gone too, so
+  `GetLogger` builds from `slog.Default()` unconditionally. Keeping a private
+  path that only tests exercised meant the package under test behaved slightly
+  differently from the package callers get — where output goes is slog's
+  business, configured once at startup.
+- The tests capture output by swapping `slog.Default()` for the duration of one
+  test and restoring it after, instead of pinning a logger onto a context. That
+  is process-wide state, so the tests that do it no longer run with `t.Parallel`
+  — two of them swapping at once would each read the other's output. The suite
+  is green under `-race`.
+
 ## v0.3.0 — 2026-07-31
 
 - **Breaking.** `scope.GetCtxWithLogger` is removed. It pinned the logger that
