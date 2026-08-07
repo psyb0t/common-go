@@ -2,6 +2,40 @@
 
 All notable changes per release. Versions follow [semver](https://semver.org).
 
+## v0.3.3 — 2026-08-07
+
+The gorm logger stops putting raw SQL — values and all — into your logs.
+
+### Fixed
+
+- **`db.GormSlogLogger` no longer logs query literals.** Every traced statement
+  went out as a `sql` field containing the query verbatim, so anything inlined
+  into it — an email address in a `WHERE`, a token in an `INSERT`, a whole
+  encrypted blob — was copied into the log stream and then into whatever
+  ships it onward. Statements are now normalised before logging: single-quoted
+  strings and numeric literals are replaced with `?`, and runs of whitespace
+  collapse to one space.
+
+- **A single statement can no longer blow up a log line.** The normalised query
+  is truncated at 2048 bytes, backing off to a valid UTF-8 boundary so a
+  multi-byte character is never cut in half.
+
+  The trace fields change shape as a result: `sql` is replaced by
+  `sql_preview` (the redacted, truncated statement), `sql_bytes` (the original
+  length, so you can still see that a query was enormous) and `sql_truncated`.
+  **Anything querying on the `sql` field needs repointing at `sql_preview`.**
+
+### Added
+
+- **`errors.ErrUnavailable`** — for a capability the process knows about but
+  that was never wired: an optional dependency left unconfigured, a feature
+  switched off, a subsystem that failed to start. Distinct from `ErrNotFound`
+  on purpose: an empty lookup tells the caller to fix the query, an unavailable
+  capability tells them to fix the configuration.
+
+- `.gitignore` covers agent scratch directories, local env files, coverage and
+  profile artifacts, and editor state.
+
 ## v0.3.2 — 2026-08-01
 
 Infrastructure only. No Go code changed and the exported API is untouched —

@@ -10,3 +10,36 @@ http/server/.test/uploads
 git-update.sh
 CLAUDE.md
 .telemetry/
+
+# Codex / agent scratch — never commit
+AGENTS.md
+CODEX.local.md
+.research_files/
+.agent_notes/
+.agent_knowledge/
+.anustimes/
+.testing/
+PLAN.md
+implplan.md
+NOTES.md
+TODO.md
+WIP.md
+
+# Secrets
+.env.local
+.env.*
+!.env.example
+
+# Test / profile artifacts
+profile.out
+.cover/
+htmlcov/
+
+# Editor / IDE
+.idea/
+.editorconfig
+.envrc
+.tool-versions
+.python-version
+.nvmrc
+pyrightconfig.json

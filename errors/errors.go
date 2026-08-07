@@ -50,6 +50,13 @@ var (
 	ErrMarshalFailed   = errors.New("marshal failed")
 
 	// Process State errors
+	//
+	// ErrUnavailable is for a capability the process knows about but that was
+	// never wired: an optional dependency left unconfigured, a feature switched
+	// off, a subsystem that failed to start. Deliberately distinct from
+	// ErrNotFound — a lookup that came back empty tells the caller to fix the
+	// query, an unavailable capability tells them to fix the configuration.
+	ErrUnavailable  = errors.New("unavailable")
 	ErrFailed       = errors.New("failed")
 	ErrTimeout      = errors.New("timeout")
 	ErrTerminated   = errors.New("terminated")
