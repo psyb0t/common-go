@@ -2,6 +2,44 @@
 
 All notable changes per release. Versions follow [semver](https://semver.org).
 
+## v0.4.0 — 2026-08-08
+
+The `scope` package moved out of this module.
+
+- **Breaking.** `github.com/psyb0t/common-go/scope` is gone. It now lives at
+  `github.com/psyb0t/ctxscope`. The API is unchanged apart from the package
+  name:
+
+  ```go
+  // before
+  import "github.com/psyb0t/common-go/scope"
+  scope.Set(ctx, scope.Attr("request_id", id))
+
+  // after
+  import "github.com/psyb0t/ctxscope"
+  ctxscope.Set(ctx, ctxscope.Attr("request_id", id))
+  ```
+
+  Pinning `v0.3.x` keeps the old import path working. Nothing is retracted.
+
+- **Why it left.** Scope is a foundational primitive — attributes pinned to a
+  `context.Context` that land on every log line emitted under it — and it was
+  stdlib-only apart from `ctxerrors`, sitting in a module that also requires
+  gorm, echo, NATS, Redis, gRPC and the Temporal SDK. The cost was release
+  coupling, not dependencies: a change to scope could not ship without whatever
+  else in this module happened to be in flight, and importers took version bumps
+  driven entirely by code they never compile.
+
+  The dependency argument usually given for such a split did not apply here and
+  is not being claimed — Go's module-graph pruning already kept this module's
+  heavy requirements out of a scope-only build. What the split does buy is that
+  "scope imports nothing but stdlib" is now enforced by a module boundary rather
+  than by a note in a document.
+
+- `ctxscope` also adds `NewHandler`, a `slog.Handler` that applies the context's
+  scope to every record, so plain `slog.InfoContext` carries the attributes —
+  including from library code that never imports it.
+
 ## v0.3.5 — 2026-08-08
 
 Finishes the SQL redaction v0.3.3 started. Two Postgres literal forms were still
