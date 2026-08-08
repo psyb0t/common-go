@@ -2,6 +2,17 @@
 
 All notable changes per release. Versions follow [semver](https://semver.org).
 
+## v0.4.1 — 2026-08-08
+
+Documentation. No code change.
+
+- The v0.4.0 note about `scope` moving to `ctxscope` was inserted between the
+  description and the badge row, pushing the badges below the fold. Moved it
+  under the badges as a callout, where it reads as a migration note rather than
+  as part of the summary.
+- The callout now also states the migration explicitly (`scope.Set` →
+  `ctxscope.Set`) and that pinning `v0.3.x` keeps the old import path working.
+
 ## v0.4.0 — 2026-08-08
 
 The `scope` package moved out of this module.
