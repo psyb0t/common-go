@@ -5,7 +5,7 @@
 //
 //	go run ./scope/.example
 //
-// A real service configures slog through github.com/psyb0t/slog-configurator;
+// A real service configures slog through github.com/psyb0t/slogging/slogconf;
 // this example leans on slog.Default() so it stays dependency-free.
 package main
 

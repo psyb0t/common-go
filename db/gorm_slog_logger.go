@@ -58,8 +58,7 @@ type sqlSummary struct {
 }
 
 func summarizeSQL(query string) sqlSummary {
-	normalized := redactSQLValues(query)
-	preview, truncated := truncateUTF8(normalized, maxSQLPreviewBytes)
+	preview, truncated := redactSQLValues(query, maxSQLPreviewBytes)
 
 	return sqlSummary{
 		Preview:   preview,
@@ -68,46 +67,152 @@ func summarizeSQL(query string) sqlSummary {
 	}
 }
 
-func redactSQLValues(query string) string {
+//nolint:cyclop // bounded scanner branches by SQL token class
+func redactSQLValues(query string, maxBytes int) (string, bool) {
 	var out strings.Builder
 
-	out.Grow(min(len(query), maxSQLPreviewBytes))
+	out.Grow(min(len(query), maxBytes))
 
 	lastWasSpace := false
 
 	for i := 0; i < len(query); {
-		r, size := utf8.DecodeRuneInString(query[i:])
+		if isEscapeStringStart(query, i) {
+			const escapeStringPrefixBytes = 2
 
-		switch {
-		case r == '\'':
 			out.WriteByte('?')
 
-			i = skipQuotedLiteral(query, i+size)
+			i = skipEscapeQuotedLiteral(query, i+escapeStringPrefixBytes)
 			lastWasSpace = false
-		case unicode.IsSpace(r):
-			// Leading whitespace is dropped rather than collapsed, so the
-			// preview never opens with a space that TrimSpace would remove
-			// anyway.
-			if !lastWasSpace && out.Len() > 0 {
-				out.WriteByte(' ')
+		} else if delimiter, ok := dollarQuoteDelimiter(query, i); ok {
+			out.WriteByte('?')
+
+			i = skipDollarQuotedLiteral(query, i+len(delimiter), delimiter)
+			lastWasSpace = false
+		} else {
+			r, size := utf8.DecodeRuneInString(query[i:])
+
+			switch {
+			case r == '\'':
+				out.WriteByte('?')
+
+				i = skipQuotedLiteral(query, i+size)
+				lastWasSpace = false
+			case unicode.IsSpace(r):
+				// Leading whitespace is dropped rather than collapsed, so the
+				// preview never opens with a space that TrimSpace would remove.
+				if !lastWasSpace && out.Len() > 0 {
+					out.WriteByte(' ')
+				}
+
+				i += size
+				lastWasSpace = true
+			case unicode.IsDigit(r):
+				out.WriteByte('?')
+
+				i = skipNumericLiteral(query, i+size)
+				lastWasSpace = false
+			default:
+				out.WriteRune(r)
+
+				i += size
+				lastWasSpace = false
 			}
+		}
 
-			i += size
-			lastWasSpace = true
-		case unicode.IsDigit(r):
-			out.WriteByte('?')
+		if out.Len() >= maxBytes && i < len(query) {
+			preview, _ := truncateUTF8(strings.TrimSpace(out.String()), maxBytes)
 
-			i = skipNumericLiteral(query, i+size)
-			lastWasSpace = false
-		default:
-			out.WriteRune(r)
-
-			i += size
-			lastWasSpace = false
+			return preview, true
 		}
 	}
 
-	return strings.TrimSpace(out.String())
+	return strings.TrimSpace(out.String()), false
+}
+
+func isEscapeStringStart(query string, i int) bool {
+	return i+1 < len(query) &&
+		(query[i] == 'E' || query[i] == 'e') &&
+		query[i+1] == '\''
+}
+
+func skipEscapeQuotedLiteral(query string, i int) int {
+	for i < len(query) {
+		if query[i] == '\\' {
+			i++
+			if i < len(query) {
+				_, size := utf8.DecodeRuneInString(query[i:])
+				i += size
+			}
+
+			continue
+		}
+
+		next, size := utf8.DecodeRuneInString(query[i:])
+		i += size
+
+		if next != '\'' {
+			continue
+		}
+
+		if i < len(query) && query[i] == '\'' {
+			i++
+
+			continue
+		}
+
+		return i
+	}
+
+	return i
+}
+
+func dollarQuoteDelimiter(query string, i int) (string, bool) {
+	if i >= len(query) || query[i] != '$' {
+		return "", false
+	}
+
+	relativeEnd := strings.IndexByte(query[i+1:], '$')
+	if relativeEnd < 0 {
+		return "", false
+	}
+
+	end := i + 1 + relativeEnd
+	if !validDollarQuoteTag(query[i+1 : end]) {
+		return "", false
+	}
+
+	return query[i : end+1], true
+}
+
+func validDollarQuoteTag(tag string) bool {
+	for i, char := range []byte(tag) {
+		if !validDollarQuoteTagChar(char, i == 0) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func validDollarQuoteTagChar(char byte, first bool) bool {
+	if char == '_' {
+		return true
+	}
+
+	if char >= '0' && char <= '9' {
+		return !first
+	}
+
+	return char >= 'a' && char <= 'z' || char >= 'A' && char <= 'Z'
+}
+
+func skipDollarQuotedLiteral(query string, i int, delimiter string) int {
+	relativeEnd := strings.Index(query[i:], delimiter)
+	if relativeEnd < 0 {
+		return len(query)
+	}
+
+	return i + relativeEnd + len(delimiter)
 }
 
 // skipQuotedLiteral returns the index just past the single-quoted literal whose
@@ -158,20 +263,33 @@ func truncateUTF8(value string, maxBytes int) (string, bool) {
 		return value, false
 	}
 
-	end := maxBytes
+	const truncationMarker = "…"
+
+	end := maxBytes - len(truncationMarker)
 	for end > 0 && !utf8.ValidString(value[:end]) {
 		end--
 	}
 
-	return value[:end] + "…", true
+	return value[:end] + truncationMarker, true
 }
 
-func (l *GormSlogLogger) Trace(_ context.Context, begin time.Time, fc func() (string, int64), err error) {
+func (l *GormSlogLogger) Trace(
+	ctx context.Context,
+	begin time.Time,
+	fc func() (string, int64),
+	err error,
+) {
 	if l.LogLevel <= logger.Silent {
 		return
 	}
 
 	elapsed := time.Since(begin)
+	logLevel, shouldLog := l.traceSlogLevel(elapsed, err)
+
+	if !shouldLog || !slog.Default().Enabled(ctx, logLevel) {
+		return
+	}
+
 	sql, rows := fc()
 	summary := summarizeSQL(sql)
 	attrs := []any{
@@ -189,5 +307,21 @@ func (l *GormSlogLogger) Trace(_ context.Context, begin time.Time, fc func() (st
 		slog.Warn("SLOW QUERY", attrs...)
 	case l.LogLevel >= logger.Info:
 		slog.Debug("SQL EXECUTED", attrs...)
+	}
+}
+
+func (l *GormSlogLogger) traceSlogLevel(
+	elapsed time.Duration,
+	err error,
+) (slog.Level, bool) {
+	switch {
+	case err != nil && l.LogLevel >= logger.Error:
+		return slog.LevelError, true
+	case elapsed > slowQueryThreshold && l.LogLevel >= logger.Warn:
+		return slog.LevelWarn, true
+	case l.LogLevel >= logger.Info:
+		return slog.LevelDebug, true
+	default:
+		return slog.LevelDebug, false
 	}
 }

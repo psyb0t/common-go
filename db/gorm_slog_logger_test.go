@@ -39,6 +39,16 @@ func TestSummarizeSQL(t *testing.T) {
 			wantPreview: "SELECT * FROM users WHERE id = ?",
 		},
 		{
+			name:        "redacts postgres escape string",
+			query:       `SELECT E'secret\'tail'`,
+			wantPreview: "SELECT ?",
+		},
+		{
+			name:        "redacts postgres dollar string",
+			query:       "SELECT $payload$secret-value$payload$",
+			wantPreview: "SELECT ?",
+		},
+		{
 			name:          "bounds large multibyte query",
 			query:         "SELECT " + strings.Repeat("界", maxSQLPreviewBytes),
 			wantTruncated: true,
@@ -57,9 +67,33 @@ func TestSummarizeSQL(t *testing.T) {
 			if tc.wantPreview != "" {
 				assert.Equal(t, tc.wantPreview, got.Preview)
 			}
-			assert.LessOrEqual(t, len(got.Preview), maxSQLPreviewBytes+len("…"))
+			assert.LessOrEqual(t, len(got.Preview), maxSQLPreviewBytes)
 		})
 	}
+}
+
+func TestGormSlogLoggerTraceSkipsDisabledRecord(t *testing.T) {
+	var logs bytes.Buffer
+
+	previous := slog.Default()
+	slog.SetDefault(slog.New(slog.NewJSONHandler(&logs, nil)))
+	t.Cleanup(func() { slog.SetDefault(previous) })
+
+	fcCalls := 0
+	l := &GormSlogLogger{LogLevel: logger.Info}
+	l.Trace(
+		context.Background(),
+		time.Now(),
+		func() (string, int64) {
+			fcCalls++
+
+			return "SELECT 1", 1
+		},
+		nil,
+	)
+
+	assert.Zero(t, fcCalls)
+	assert.Empty(t, logs.String())
 }
 
 func TestGormSlogLoggerTraceBoundsSQL(t *testing.T) {

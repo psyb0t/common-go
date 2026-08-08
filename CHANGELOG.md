@@ -2,6 +2,43 @@
 
 All notable changes per release. Versions follow [semver](https://semver.org).
 
+## v0.3.5 — 2026-08-08
+
+Finishes the SQL redaction v0.3.3 started. Two Postgres literal forms were still
+reaching the log stream verbatim.
+
+### Fixed
+
+- **Escape strings (`E'...'`) leaked their tail.** Postgres escape strings use
+  backslash escapes, so `\'` does not end the literal — but the scanner treated
+  it as if it did and resumed emitting mid-secret. `SELECT E'secret\'tail'`
+  logged `tail'`.
+- **Dollar-quoted strings (`$tag$...$tag$`) leaked entirely.** They contain no
+  quotes at all, so the scanner never entered redaction and copied the body
+  straight through. `SELECT $payload$secret-value$payload$` logged
+  `secret-value` verbatim — the exact failure v0.3.3 existed to close, still
+  open for anything using Postgres' own quoting.
+
+  Dollar-quote tags are validated rather than assumed: only a well-formed tag
+  opens a literal, so a bare `$` in arithmetic is not mistaken for one.
+
+### Changed
+
+- Redaction and truncation are now a single pass with a byte budget, rather than
+  normalising the whole statement and truncating afterwards. A 10 MB query used
+  to allocate 10 MB to produce a 2 KB preview.
+- `Trace` checks whether the record would be emitted before doing any of this
+  work, so a disabled level costs nothing.
+
+The trace field shape is unchanged (`sql_preview` / `sql_bytes` /
+`sql_truncated`), and no exported signature moved.
+
+### Docs
+
+- The `scope/.example` header pointed at `github.com/psyb0t/slog-configurator`,
+  which was renamed to `github.com/psyb0t/slogging` — the example itself stays
+  dependency-free and leans on `slog.Default()`.
+
 ## v0.3.4 — 2026-08-08
 
 Repository infrastructure only. No library code changed.
