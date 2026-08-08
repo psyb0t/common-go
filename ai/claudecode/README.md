@@ -100,10 +100,10 @@ err := client.Health(ctx)
 
 ## Mocking
 
-A `Runner` mock is generated via `go generate` for use in tests:
+A `Runner` mock (`mocks.Runner`) is generated via `go generate` for use in tests:
 
 ```go
 import "github.com/psyb0t/common-go/ai/claudecode/mocks"
 
-mock := mocks.NewMockRunner(t)
+mock := mocks.NewRunner(t)
 ```

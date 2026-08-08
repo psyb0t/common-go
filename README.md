@@ -1,8 +1,12 @@
 # common-go
 
-Shared Go building blocks for psyb0t services: error sentinels, HTTP helpers,
-cache, DB, queues, rate limiting, structured logging, Temporal, and LLM
-utilities.
+Shared Go building blocks for psyb0t services: error sentinels, cache, DB,
+queues, rate limiting, Temporal, and LLM utilities.
+
+Two packages here still ship but are superseded for new code — `http` by
+[`aichteeteapee`](https://github.com/psyb0t/aichteeteapee), and the Loki slog
+sink `slogging/loki` by
+[`slogging/handlers/loki`](https://github.com/psyb0t/slogging).
 
 [![CI](https://github.com/psyb0t/common-go/actions/workflows/pipeline.yml/badge.svg?branch=main)](https://github.com/psyb0t/common-go/actions/workflows/pipeline.yml)
 [![coverage](https://raw.githubusercontent.com/psyb0t/common-go/badges/coverage.svg)](https://github.com/psyb0t/common-go/actions/workflows/pipeline.yml)
@@ -12,5 +16,6 @@ utilities.
 
 > **Moved out:** log scope propagation used to live here as `common-go/scope`.
 > Since v0.4.0 it is its own module — [`ctxscope`](https://github.com/psyb0t/ctxscope) —
-> so it ships without waiting on gorm, echo, NATS or the Temporal SDK. Same API,
-> new package name (`scope.Set` → `ctxscope.Set`). Pin `v0.3.x` to keep the old path.
+> so it ships without waiting on gorm, echo, NATS or the Temporal SDK. Same core
+> API, new package name (`scope.Set` → `ctxscope.Set`), plus a new `NewHandler`
+> for automatic context-scope propagation. Pin `v0.3.x` to keep the old path.

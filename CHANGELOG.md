@@ -2,6 +2,23 @@
 
 All notable changes per release. Versions follow [semver](https://semver.org).
 
+## v0.4.2 — 2026-08-08
+
+Documentation. No code change.
+
+- The summary line advertised "structured logging". What is actually here is a
+  single Loki slog sink (`slogging/loki`); the configurator and handlers live in
+  [`slogging`](https://github.com/psyb0t/slogging).
+- `ai/claudecode`'s README told you to call `mocks.NewMockRunner(t)`. The
+  generated constructor is `mocks.NewRunner`.
+- Both `http` and `slogging/loki` are now listed as shipping-but-superseded —
+  `http` by [`aichteeteapee`](https://github.com/psyb0t/aichteeteapee), the sink
+  by `slogging/handlers/loki`. Dropping them from the summary entirely would
+  have traded an overclaim for an omission: both still ship, and neither is
+  marked deprecated in code.
+- The v0.4.0 migration callout now also mentions `ctxscope.NewHandler`, which
+  did not exist in the `common-go/scope` version.
+
 ## v0.4.1 — 2026-08-08
 
 Documentation. No code change.
