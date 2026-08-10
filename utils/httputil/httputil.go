@@ -40,7 +40,7 @@ func DownloadFile(ctx context.Context, url, targetPath string) error {
 
 	if resp.StatusCode != http.StatusOK {
 		return ctxerrors.Wrapf(
-			commonerrors.ErrUnexpectedHTTPStatusCode,
+			ErrUnexpectedHTTPStatusCode,
 			"status code: %d",
 			resp.StatusCode,
 		)

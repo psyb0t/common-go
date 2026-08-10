@@ -2,6 +2,20 @@
 
 All notable changes per release. Versions follow [semver](https://semver.org).
 
+## v0.6.0 — 2026-08-10
+
+The HTTP-specific `ErrUnexpectedHTTPStatusCode` leaves the shared sentinels.
+
+- **Breaking.** `commonerrors.ErrUnexpectedHTTPStatusCode` is removed. It
+  described an HTTP status code coming back wrong — HTTP-specific, not a
+  general-purpose sentinel — so it no longer belongs in the shared vocabulary.
+  Its one consumer, `utils/httputil`, now defines its own
+  `httputil.ErrUnexpectedHTTPStatusCode`, which is where an HTTP-status error
+  belongs.
+- Bumps the `ctxerrors` dependency to `v0.7.0`, the release that removed the
+  sentinel from `ctxerrors/commerr`.
+- Every other re-exported sentinel is unchanged.
+
 ## v0.5.0 — 2026-08-10
 
 The `errors` sentinels move to `ctxerrors/commerr`; this package re-exports them.

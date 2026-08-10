@@ -4,6 +4,36 @@ All notable changes per release. Versions follow [semver](https://semver.org)
 pre-1.0 conventions: minor bumps may include breaking API changes (called out
 explicitly), patch bumps are docs / build / fixes only.
 
+## v0.7.0 — 2026-08-10
+
+Removes `commerr.ErrUnexpectedHTTPStatusCode` — it is HTTP-specific (61 → 60).
+
+- **Breaking.** `ErrUnexpectedHTTPStatusCode` describes an HTTP status code
+  coming back wrong, which is not transport-agnostic — the bar for `commerr`. It
+  is removed. Code that needs an HTTP-status sentinel should define one in its
+  HTTP package (`aichteeteapee` already ships `ErrUnexpectedResponseStatus`).
+- Everything else stays: rate limiting and auth (`ErrRateLimited`,
+  `ErrNotAuthenticated`, `ErrPermissionDenied`) are not HTTP-only — you can be
+  rate-limited on gRPC or a queue and fail auth on any protocol — so they remain.
+
+## v0.6.0 — 2026-08-10
+
+Expands `commerr` with 16 more general-purpose sentinels (45 → 61).
+
+- **Operation symmetry:** `ErrReadFailed` (the counterpart the existing
+  `ErrWriteFailed` never had), plus `ErrOpenFailed`, `ErrCloseFailed` and
+  `ErrExecFailed`.
+- **Capability:** `ErrNotImplemented`, `ErrUnsupported`.
+- **Validation:** `ErrValidationFailed`, `ErrOutOfRange`.
+- **Lifecycle / state:** `ErrClosed` (resting state to the existing
+  `ErrClosing`), `ErrNotReady`, `ErrInvalidState`, `ErrExpired`.
+- **Concurrency / capacity:** `ErrLockHeld`, `ErrConflict`, `ErrExhausted`.
+- **Access:** `ErrPermissionDenied` (authorization, distinct from the existing
+  `ErrNotAuthenticated`).
+- All are transport- and domain-agnostic, plain `errors.New` values that hold
+  under `errors.Is` through any `Wrap` depth — same contract as the rest of the
+  package. Nothing existing changed.
+
 ## v0.5.0 — 2026-08-10
 
 Adds `commerr`, a subpackage holding the common sentinel errors.

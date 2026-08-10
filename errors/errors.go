@@ -63,8 +63,7 @@ var (
 	ErrShuttingDown = commerr.ErrShuttingDown
 	ErrCancelled    = commerr.ErrCancelled
 
-	// API & HTTP errors
-	ErrUnexpectedHTTPStatusCode = commerr.ErrUnexpectedHTTPStatusCode
-	ErrNotAuthenticated         = commerr.ErrNotAuthenticated
-	ErrRateLimited              = commerr.ErrRateLimited
+	// Access & rate-limit errors
+	ErrNotAuthenticated = commerr.ErrNotAuthenticated
+	ErrRateLimited      = commerr.ErrRateLimited
 )
