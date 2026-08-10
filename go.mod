@@ -10,7 +10,7 @@ require (
 	github.com/labstack/echo/v4 v4.15.1
 	github.com/nats-io/nats.go v1.49.0
 	github.com/oapi-codegen/echo-middleware v1.0.2
-	github.com/psyb0t/ctxerrors v0.2.3
+	github.com/psyb0t/ctxerrors v0.5.0
 	github.com/psyb0t/gonfiguration v1.5.0
 	github.com/redis/go-redis/v9 v9.14.1
 	github.com/stretchr/testify v1.11.1

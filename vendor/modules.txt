@@ -1010,9 +1010,10 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
-# github.com/psyb0t/ctxerrors v0.2.3
-## explicit; go 1.25
+# github.com/psyb0t/ctxerrors v0.5.0
+## explicit; go 1.26
 github.com/psyb0t/ctxerrors
+github.com/psyb0t/ctxerrors/commerr
 # github.com/psyb0t/gonfiguration v1.5.0
 ## explicit; go 1.25
 github.com/psyb0t/gonfiguration

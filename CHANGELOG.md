@@ -2,6 +2,21 @@
 
 All notable changes per release. Versions follow [semver](https://semver.org).
 
+## v0.5.0 — 2026-08-10
+
+The `errors` sentinels move to `ctxerrors/commerr`; this package re-exports them.
+
+- The shared sentinel vocabulary (`ErrNotFound`, `ErrAlreadyExists`,
+  `ErrFetchFailed`, `ErrTimeout`, and the rest — 45 in all) now lives in
+  [`ctxerrors/commerr`](https://github.com/psyb0t/ctxerrors), where the error map
+  that translates driver errors into these sentinels also lives. `common-go/errors`
+  is now a thin re-export of that package.
+- **Not breaking.** Each `commonerrors.ErrX` is aliased to the same
+  `commerr.ErrX` value, so `errors.Is(err, commonerrors.ErrNotFound)` and
+  `errors.Is(err, commerr.ErrNotFound)` are the same check. Existing imports keep
+  working unchanged; new code should prefer importing `commerr` directly.
+- Bumps the `ctxerrors` dependency to `v0.5.0`, the release that adds `commerr`.
+
 ## v0.4.2 — 2026-08-08
 
 Documentation. No code change.

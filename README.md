@@ -3,7 +3,10 @@
 Shared Go building blocks for psyb0t services: error sentinels, cache, DB,
 queues, rate limiting, Temporal, and LLM utilities.
 
-Two packages here still ship but are superseded for new code — `http` by
+Three packages here still ship but are superseded for new code — `errors` by
+[`ctxerrors/commerr`](https://github.com/psyb0t/ctxerrors) (it now re-exports
+those sentinels from there, aliasing the same values so `errors.Is` still
+holds), `http` by
 [`aichteeteapee`](https://github.com/psyb0t/aichteeteapee), and the Loki slog
 sink `slogging/loki` by
 [`slogging/handlers/loki`](https://github.com/psyb0t/slogging).

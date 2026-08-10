@@ -1,5 +1,12 @@
 # ctxerrors
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/psyb0t/ctxerrors.svg)](https://pkg.go.dev/github.com/psyb0t/ctxerrors)
+[![CI](https://github.com/psyb0t/ctxerrors/actions/workflows/pipeline.yml/badge.svg?branch=main)](https://github.com/psyb0t/ctxerrors/actions/workflows/pipeline.yml)
+[![coverage](https://raw.githubusercontent.com/psyb0t/ctxerrors/badges/coverage.svg)](https://github.com/psyb0t/ctxerrors/actions/workflows/pipeline.yml)
+[![version](https://raw.githubusercontent.com/psyb0t/ctxerrors/badges/version.svg)](https://github.com/psyb0t/ctxerrors/tags)
+[![license](https://raw.githubusercontent.com/psyb0t/ctxerrors/badges/license.svg)](LICENSE)
+[![imported by](https://raw.githubusercontent.com/psyb0t/ctxerrors/badges/importers.svg)](https://github.com/psyb0t/ctxerrors/blob/badges/importers.md)
+
 ```
  ####  ##### #    # ###### #####  #####   ####  #####   ####  
 #    #   #    #  #  #      #    # #    # #    # #    # #      
@@ -22,6 +29,7 @@ A Go library that wraps errors with context information (file, line, function) b
   - [Creating new errors](#creating-new-errors)
   - [Wrapping existing errors](#wrapping-existing-errors)
   - [Formatted wrapping](#formatted-wrapping)
+  - [Joining errors](#joining-errors)
 - [Error output](#error-output)
   - [Error chaining](#error-chaining)
   - [Stupid inline chaining](#stupid-inline-chaining)
@@ -29,6 +37,8 @@ A Go library that wraps errors with context information (file, line, function) b
 - [More stupid fucking examples](#more-stupid-fucking-examples)
   - [Annoyingly complex tangled bullshit](#annoyingly-complex-tangled-bullshit)
   - [Ridiculously stupid chain of doom](#ridiculously-stupid-chain-of-doom)
+- [Error mapping](#error-mapping)
+- [Common sentinels](#common-sentinels)
 - [License](#license)
 - [Why?](#why)
 
@@ -47,8 +57,10 @@ This package automatically captures where your errors happen in your code. No mo
 - **New()** - Creates a new error with location context
 - **Wrap()** - Wraps existing errors with additional context and location
 - **Wrapf()** - Like Wrap() but with printf-style formatting because we're not animals
+- **Join()** - Squashes a pile of errors into one that still knows where they got squashed. For when one thing fans out and several bits can shit the bed independently — three log sinks, a batch of rows, whatever. See [Joining errors](#joining-errors).
+- **SetErrorMap() / MapError() / ClearErrorMap()** - Translate foreign sentinel errors (gorm, sql, redis...) into your own business errors at wrap time. See [Error mapping](#error-mapping).
 
-All functions return an `*ErrorWithContext` that implements the standard `error` interface and supports `errors.Unwrap()`, `errors.Is()`, and `errors.As()` because Go's error handling conventions aren't completely ass-backwards.
+`New()`, `Wrap()`, `Wrapf()`, and `Join()` return a `*CTXError` that implements the standard `error` interface and supports `errors.Unwrap()`, `errors.Is()`, and `errors.As()` because Go's error handling conventions aren't completely ass-backwards. `SetErrorMap()`, `MapError()`, and `ClearErrorMap()` don't return anything — they just manage the translation map.
 
 ## Usage
 
@@ -91,6 +103,26 @@ func connectToDatabase(host string, port int) error {
     return nil
 }
 ```
+
+### Joining errors
+
+Sometimes one operation fans out and more than one branch can fail on its own. Bailing on the first failure means the rest never even get attempted, and you find out about exactly one problem when there were three. Do all the work, collect what broke, hand it back as one error:
+
+```go
+func writeToAllSinks(sinks []Sink, record Record) error {
+    var errs []error
+
+    for i, sink := range sinks {
+        if err := sink.Write(record); err != nil {
+            errs = append(errs, ctxerrors.Wrapf(err, "sink %d failed", i))
+        }
+    }
+
+    return ctxerrors.Join(errs...)
+}
+```
+
+`Join()` ignores nil errors and returns nil when every one of them is nil, so you can hand it the slice without checking whether anything actually went wrong. The result unwraps to what the standard library's `errors.Join` produces, which means `errors.Is()` and `errors.As()` still find any of the individual errors you put in — and unlike the standard library version, the result knows the line where you joined them.
 
 ## Error output
 
@@ -170,10 +202,10 @@ if errors.Is(err, someSpecificError) {
     // handle it
 }
 
-// Or use errors.As() to get the ErrorWithContext
-var ctxErr *ctxerrors.ErrorWithContext
+// Or use errors.As() to check if it's a CTXError
+var ctxErr *ctxerrors.CTXError
 if errors.As(err, &ctxErr) {
-    fmt.Printf("Error occurred in %s at line %d\n", ctxErr.funcName, ctxErr.line)
+    fmt.Println("Got a CTXError:", ctxErr.Error())
 }
 ```
 
@@ -298,6 +330,78 @@ step 1 went to shit [main.go:42 in step1] [main.go:47 in step2]
 ```
 
 This shit makes debugging actually bearable instead of wanting to throw your laptop out the fucking window.
+
+## Error mapping
+
+Stop foreign errors from leaking through your layers. Register a translation
+map at startup and `Wrap`/`Wrapf` will swap matching driver errors for your
+own business errors before wrapping.
+
+```go
+package main
+
+import (
+    "gorm.io/gorm"
+
+    "github.com/psyb0t/ctxerrors"
+    "github.com/psyb0t/ctxerrors/commerr"
+)
+
+func init() {
+    ctxerrors.SetErrorMap(map[error]error{
+        gorm.ErrRecordNotFound: commerr.ErrNotFound,
+        gorm.ErrDuplicatedKey:  commerr.ErrAlreadyExists,
+    })
+}
+
+func GetUser(id int) error {
+    err := db.First(&user, id).Error // returns gorm.ErrRecordNotFound
+    if err != nil {
+        // wrapped err satisfies errors.Is(err, commerr.ErrNotFound) — gorm.ErrRecordNotFound is gone
+        return ctxerrors.Wrap(err, "get user")
+    }
+    return nil
+}
+```
+
+The mapping targets come from [`commerr`](#common-sentinels), the shared sentinel
+package shipped alongside — no need to hand-declare `ErrNotFound` yourself.
+
+API:
+
+- `SetErrorMap(map[error]error)` — replace the whole map.
+- `MapError(from, to error)` — add/overwrite a single entry (good for `init()` per package).
+- `ClearErrorMap()` — wipe it (mostly for tests).
+
+Matching uses `errors.Is`, so already-wrapped foreign errors still translate.
+Translation is single-pass — no chained `A→B→C`. nil keys/values are ignored.
+If no entry matches, behavior is unchanged.
+
+## Common sentinels
+
+`SetErrorMap` translates foreign errors INTO something — and `commerr` is the
+pile of somethings. It's the shared sentinel vocabulary (not-found,
+already-exists, timeout, the usual suspects) that every service ends up needing,
+parked in a subpackage so importing `ctxerrors` just to wrap shit doesn't drag
+the whole list in — you only get them when you ask:
+
+```go
+import "github.com/psyb0t/ctxerrors/commerr"
+
+func GetUser(id int) (*User, error) {
+    if id <= 0 {
+        return nil, commerr.ErrInvalidArgument
+    }
+    // ...
+    return nil, commerr.ErrNotFound
+}
+```
+
+They're plain `errors.New` sentinels, so `errors.Is(err, commerr.ErrNotFound)`
+keeps holding no matter how many times you `Wrap` it. Full list is in
+[`commerr/commerr.go`](commerr/commerr.go) — not-found, already-exists,
+fetch/parse/write/publish failed, timeout, unavailable, rate-limited, and the
+rest of the errors that keep showing up everywhere.
 
 ## License
 
