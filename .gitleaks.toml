@@ -1,0 +1,10 @@
+title = "common-go secret scanning"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Third-party SQLite Windows cryptography identifiers"
+paths = [
+  '''(^|/)vendor/modernc\.org/sqlite/lib/sqlite_windows_(386|amd64|arm64)\.go$''',
+]

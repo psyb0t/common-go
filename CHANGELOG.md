@@ -2,6 +2,23 @@
 
 All notable changes per release. Versions follow [semver](https://semver.org).
 
+## v0.7.0 — 2026-08-12
+
+Database migrations now share one source-selection and execution path, with
+SQLite available alongside PostgreSQL.
+
+- Added `db.MigrateUp`, `db.MigrateDown`, and `db.MigrateForce`. They accept a
+  `golang-migrate` database driver plus either an embedded filesystem or an
+  on-disk migration directory; the caller keeps ownership of the driver.
+- Added `db/sqlite` helpers for `*sql.DB`, covering embedded and on-disk
+  migrations without closing the caller's database handle.
+- PostgreSQL's existing `MigrateUp`, `MigrateDown`, and `MigrateForce` methods
+  retain their public signatures and now delegate to the shared runner.
+- **Breaking.** Migration validation now uses the shared
+  `ctxerrors/commerr` sentinels. Replace `db.ErrMigrationsPathEmpty` and
+  `postgresql.ErrMigrationsPathRequired` with `commerr.ErrEmptyMigrationsPath`,
+  and replace `postgresql.ErrInvalidSteps` with `commerr.ErrInvalidArgument`.
+
 ## v0.6.0 — 2026-08-10
 
 The HTTP-specific `ErrUnexpectedHTTPStatusCode` leaves the shared sentinels.
