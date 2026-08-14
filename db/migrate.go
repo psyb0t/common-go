@@ -129,6 +129,7 @@ func newMigrator(
 	}
 
 	migrationURL := url.URL{Scheme: "file", Path: path}
+
 	migrator, err := migrate.NewWithDatabaseInstance(
 		migrationURL.String(),
 		databaseName,

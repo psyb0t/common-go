@@ -2,6 +2,16 @@
 
 All notable changes per release. Versions follow [semver](https://semver.org).
 
+## v0.7.1 — 2026-08-14
+
+SQLite migrations now work with the database driver selected by the caller.
+
+- Fixed `db/sqlite` so its helpers adapt the supplied `*sql.DB` without
+  importing or registering a SQLite driver. This prevents duplicate driver
+  registration when an application uses a pure-Go SQLite GORM driver.
+- The `MigrateUp`, `MigrateDown`, and `MigrateForce` signatures are unchanged;
+  callers do not need to add driver-specific migration wiring.
+
 ## v0.7.0 — 2026-08-12
 
 Database migrations now share one source-selection and execution path, with

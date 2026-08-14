@@ -9,6 +9,7 @@ import (
 	"github.com/psyb0t/ctxerrors"
 )
 
+//nolint:ireturn // golang-migrate's constructor returns its driver interface.
 func (p *Postgresql) migrationDriver() (database.Driver, error) {
 	driver, err := pgx.WithInstance(p.SQLDB, &pgx.Config{})
 	if err != nil {
@@ -25,7 +26,11 @@ func (p *Postgresql) MigrateUp(path string, fs *embed.FS) error {
 		return ctxerrors.Wrap(err, "create PostgreSQL migration driver")
 	}
 
-	return db.MigrateUp(p.config.Database, driver, path, fs)
+	if err := db.MigrateUp(p.config.Database, driver, path, fs); err != nil {
+		return ctxerrors.Wrap(err, "migrate PostgreSQL up")
+	}
+
+	return nil
 }
 
 // MigrateDown reverts the specified number of migrations.
@@ -35,7 +40,11 @@ func (p *Postgresql) MigrateDown(path string, steps int, fs *embed.FS) error {
 		return ctxerrors.Wrap(err, "create PostgreSQL migration driver")
 	}
 
-	return db.MigrateDown(p.config.Database, driver, path, fs, steps)
+	if err := db.MigrateDown(p.config.Database, driver, path, fs, steps); err != nil {
+		return ctxerrors.Wrap(err, "migrate PostgreSQL down")
+	}
+
+	return nil
 }
 
 // MigrateForce forces migration to a specific version.
@@ -49,5 +58,9 @@ func (p *Postgresql) MigrateForce(
 		return ctxerrors.Wrap(err, "create PostgreSQL migration driver")
 	}
 
-	return db.MigrateForce(p.config.Database, driver, path, fs, version)
+	if err := db.MigrateForce(p.config.Database, driver, path, fs, version); err != nil {
+		return ctxerrors.Wrap(err, "force PostgreSQL migration version")
+	}
+
+	return nil
 }

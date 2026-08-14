@@ -2,11 +2,10 @@
 package sqlite
 
 import (
+	"context"
 	"database/sql"
 	"embed"
 
-	"github.com/golang-migrate/migrate/v4/database"
-	migrationsqlite "github.com/golang-migrate/migrate/v4/database/sqlite"
 	commondb "github.com/psyb0t/common-go/db"
 	"github.com/psyb0t/ctxerrors"
 	"github.com/psyb0t/ctxerrors/commerr"
@@ -22,7 +21,11 @@ func MigrateUp(sqlDB *sql.DB, path string, migrationFS *embed.FS) error {
 		return ctxerrors.Wrap(err, "create SQLite migration driver")
 	}
 
-	return commondb.MigrateUp(migrationDatabaseName, driver, path, migrationFS)
+	if err := commondb.MigrateUp(migrationDatabaseName, driver, path, migrationFS); err != nil {
+		return ctxerrors.Wrap(err, "migrate SQLite up")
+	}
+
+	return nil
 }
 
 // MigrateDown reverts the requested number of migrations. sqlDB remains owned
@@ -38,13 +41,17 @@ func MigrateDown(
 		return ctxerrors.Wrap(err, "create SQLite migration driver")
 	}
 
-	return commondb.MigrateDown(
+	if err := commondb.MigrateDown(
 		migrationDatabaseName,
 		driver,
 		path,
 		migrationFS,
 		steps,
-	)
+	); err != nil {
+		return ctxerrors.Wrap(err, "migrate SQLite down")
+	}
+
+	return nil
 }
 
 // MigrateForce marks sqlDB at version without running a migration. sqlDB
@@ -60,21 +67,29 @@ func MigrateForce(
 		return ctxerrors.Wrap(err, "create SQLite migration driver")
 	}
 
-	return commondb.MigrateForce(
+	if err := commondb.MigrateForce(
 		migrationDatabaseName,
 		driver,
 		path,
 		migrationFS,
 		version,
-	)
+	); err != nil {
+		return ctxerrors.Wrap(err, "force SQLite migration version")
+	}
+
+	return nil
 }
 
-func migrationDriver(sqlDB *sql.DB) (database.Driver, error) {
+func migrationDriver(sqlDB *sql.DB) (*driver, error) {
 	if sqlDB == nil {
 		return nil, ctxerrors.Wrap(commerr.ErrRequiredFieldNotSet, "SQLite database")
 	}
 
-	driver, err := migrationsqlite.WithInstance(sqlDB, &migrationsqlite.Config{})
+	if err := sqlDB.PingContext(context.Background()); err != nil {
+		return nil, ctxerrors.Wrap(err, "ping SQLite database")
+	}
+
+	driver, err := newDriver(sqlDB)
 	if err != nil {
 		return nil, ctxerrors.Wrap(err, "create SQLite migration driver")
 	}

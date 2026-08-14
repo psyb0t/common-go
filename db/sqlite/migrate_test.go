@@ -8,8 +8,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/psyb0t/ctxerrors/commerr"
 	"github.com/stretchr/testify/require"
+	_ "modernc.org/sqlite"
 )
 
 const migrationsPath = "testdata/migrations"
@@ -42,6 +44,11 @@ func TestMigrateDownRejectsNonPositiveSteps(t *testing.T) {
 func TestMigrateUpRejectsNilDatabase(t *testing.T) {
 	err := MigrateUp(nil, migrationsPath, &migrationsFS)
 	require.ErrorIs(t, err, commerr.ErrRequiredFieldNotSet)
+}
+
+func TestMigrationDriver_DoesNotRegisterSQLiteDriver(t *testing.T) {
+	_, err := database.Open("sqlite://unused")
+	require.Error(t, err)
 }
 
 func TestMigrateUpFromFilesystem(t *testing.T) {
