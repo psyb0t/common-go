@@ -22,3 +22,9 @@ sink `slogging/loki` by
 > so it ships without waiting on gorm, echo, NATS or the Temporal SDK. Same core
 > API, new package name (`scope.Set` → `ctxscope.Set`), plus a new `NewHandler`
 > for automatic context-scope propagation. Pin `v0.3.x` to keep the old path.
+
+## SQLite with GORM
+
+[`db/sqlite/gorm`](db/sqlite/gorm) provides a pure-Go modernc SQLite dialector. Use `sqlitegorm.Open(dsn)` with `gorm.Open` and set `gorm.Config.TranslateError` to translate primary-key, unique and foreign-key failures to GORM sentinels. The caller owns and closes the underlying `*sql.DB`.
+
+The separate `db/sqlite` migration helpers continue accepting a caller-owned connection without selecting a driver. See the [adapter documentation](db/sqlite/gorm/README.md) for usage and driver compatibility.

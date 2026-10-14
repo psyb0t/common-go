@@ -2,6 +2,14 @@
 
 All notable changes per release. Versions follow [semver](https://semver.org).
 
+## v0.8.0 (2026-10-14)
+
+Adds an opt-in modernc SQLite adapter for GORM. Existing migration-only callers need no changes.
+
+- Adds `db/sqlite/gorm.Open` to use the pure-Go `modernc.org/sqlite` driver with GORM's SQLite dialect.
+- Maps primary-key and unique constraint failures to `gorm.ErrDuplicatedKey` and foreign-key failures to `gorm.ErrForeignKeyViolated` when `TranslateError` is enabled. Other errors retain their original identity.
+- Keeps `db/sqlite` migrations driver-neutral, so applications can use the adapter alongside other packages that select modernc without duplicate SQLite driver registration.
+
 ## v0.7.1 — 2026-08-14
 
 SQLite migrations now work with the database driver selected by the caller.

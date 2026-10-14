@@ -109,6 +109,7 @@ linters:
             - github.com/replicate/replicate-go
             - github.com/mitchellh/mapstructure
             - gorm.io
+            - modernc.org/sqlite
             - github.com/golang-migrate
             - github.com/invopop/jsonschema
             - github.com/openai/openai-go
