@@ -2,6 +2,17 @@
 
 All notable changes per release. Versions follow [semver](https://semver.org).
 
+## v0.9.0 (2026-10-23)
+
+- Adds `db/mysql` with SQL/GORM connection ownership, optional database creation, typed environment configuration and verified TLS.
+- Adds embedded and filesystem MySQL migration helpers for UP, DOWN and force operations. Wrapper methods isolate multi-statement execution from the application pool; standalone helpers preserve caller-owned pools.
+- Adds real MySQL migration and connection tests, including concurrent migrations, dirty-version recovery and resource cleanup. Development Make targets run in Docker.
+- Replaces the Go-specific CI runner with `code-workflow`, including build, lint, race-enabled coverage, security SARIF and generation checks. Tag publishing waits for the default-branch run of the same commit.
+- Adds source/history secret scanning, dependency and container configuration checks, and age-checked dependency commands. Coverage requires 10% and fails when no percentage is produced.
+- Updates vulnerable HTTP, OpenAPI, gRPC, compression and Go support dependencies to fixed versions.
+- Updates the SQLite driver to fix a race when multiple GORM connections open concurrently.
+- Staggers scheduled issue synchronization across the day.
+
 ## v0.8.0 (2026-10-14)
 
 Adds an opt-in modernc SQLite adapter for GORM. Existing migration-only callers need no changes.

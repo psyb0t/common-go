@@ -1,1 +1,16 @@
+.git
 .telemetry/
+.github
+.env
+.env.*
+.testing
+.research_files
+.agent_notes
+.agents
+AGENTS.md
+CLAUDE.md
+.vscode
+.idea
+git-update.sh*
+coverage*
+*.log

@@ -2,6 +2,7 @@ package sqlitegorm
 
 import (
 	"path/filepath"
+	"sync"
 	"testing"
 
 	commonsqlite "github.com/psyb0t/common-go/db/sqlite"
@@ -21,6 +22,35 @@ CREATE TABLE entries (
 );
 INSERT INTO parents VALUES (1);
 INSERT INTO entries VALUES (1, 'first', 1);`
+
+func TestConcurrentOpen(t *testing.T) {
+	const connections = 32
+	start := make(chan struct{})
+	errors := make(chan error, connections)
+	var workers sync.WaitGroup
+	for range connections {
+		workers.Go(func() {
+			<-start
+			database, err := gorm.Open(Open(":memory:"), &gorm.Config{})
+			if err != nil {
+				errors <- err
+				return
+			}
+			connection, err := database.DB()
+			if err != nil {
+				errors <- err
+				return
+			}
+			errors <- connection.Close()
+		})
+	}
+	close(start)
+	workers.Wait()
+	close(errors)
+	for err := range errors {
+		require.NoError(t, err)
+	}
+}
 
 func TestOpenTranslatesConstraints(t *testing.T) {
 	t.Parallel()

@@ -1,0 +1,2 @@
+# Keep vendored dependencies byte-for-byte with their upstream sources.
+vendor/** -whitespace

@@ -111,6 +111,7 @@ linters:
             - gorm.io
             - modernc.org/sqlite
             - github.com/golang-migrate
+            - github.com/go-sql-driver/mysql
             - github.com/invopop/jsonschema
             - github.com/openai/openai-go
             - github.com/cenkalti/backoff
