@@ -20,7 +20,7 @@ generate: ## Run all code generation
 	@go generate ./...
 
 format: ## Format database helpers and development scripts
-	@gofmt -w db/mysql scripts
+	@gofmt -w db/mysql db/postgresql scripts
 	@shfmt -w scripts/*.sh
 
 lint: ## Lint all Golang files

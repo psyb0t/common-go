@@ -23,6 +23,10 @@ The separate `db/sqlite` migration helpers continue accepting a caller-owned con
 
 [`db/mysql`](db/mysql/README.md) opens a shared SQL/GORM pool with `New` or `NewWithConfig`, optional database creation, verified TLS and versioned SQL migrations. Application queries keep multi-statements disabled; migration methods use a separate pool. Existing caller-owned pools can use the standalone migration helpers.
 
+## PostgreSQL migrations
+
+[`db/postgresql`](db/postgresql/README.md) opens a shared pgx SQL/GORM pool. Its migration methods reserve one connection and return it after success or failure; they leave the application pool open. Existing migration ledgers and the UP, DOWN and force method signatures are preserved.
+
 ## Development
 
 Run `make dep`, `make build`, `make lint`, `make generate` and `make test` through the Docker development image. Tests use `-race`; `make test PKG=./db/mysql` runs the real MySQL suite alone. Test targets use the host Docker socket to start sibling testcontainers. Other targets do not receive the socket. `make test-coverage` runs the complete suite with a 10% minimum.

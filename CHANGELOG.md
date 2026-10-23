@@ -2,6 +2,12 @@
 
 All notable changes per release. Versions follow [semver](https://semver.org).
 
+## v0.9.1 (2026-10-23)
+
+- Releases PostgreSQL migration connections after UP, DOWN and force operations, including failures, without closing the application pool.
+- Rejects missing PostgreSQL pools and invalid rollback step counts with shared error sentinels.
+- Adds real PostgreSQL regressions for one-connection pools, repeated and concurrent migrations, filesystem sources and dirty-version recovery.
+
 ## v0.9.0 (2026-10-23)
 
 - Adds `db/mysql` with SQL/GORM connection ownership, optional database creation, typed environment configuration and verified TLS.
