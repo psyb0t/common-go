@@ -2,6 +2,16 @@
 
 All notable changes per release. Versions follow [semver](https://semver.org).
 
+## v0.10.0 (2026-10-24)
+
+`db.GormSlogLogger` stops logging empty lookups as errors and carries the caller's log scope, and echo moves past four advisories. Callers that relied on an ERROR record for `gorm.ErrRecordNotFound` set `IgnoreRecordNotFoundError` to `false`.
+
+- Changes `NewGormSlogLogger` to log a query that finds no record as an ordinary DEBUG query, not an ERROR. A caller that polls for absent work, such as a workflow backend, no longer logs an error on every empty poll. `IgnoreRecordNotFoundError` controls it and defaults to `true`, like GORM's own logger option.
+- Changes every `GormSlogLogger` record to go through `ctxscope.GetLogger(ctx)`, so it carries the context's scope attributes, such as a request or session ID.
+- Changes GORM's own `Info`, `Warn` and `Error` messages to log as `gorm message` with the rendered text in a `detail` field, instead of using the rendered text as the message.
+- Adds `github.com/psyb0t/ctxscope` as a dependency.
+- Updates `github.com/labstack/echo/v4` to v4.16.1 for GHSA-cxf3-9h37-7rr8, GHSA-9969-6676-49h5, GHSA-f48p-c9v4-h7xv and GHSA-h7wr-284f-5qvc. govulncheck finds no call to the affected code.
+
 ## v0.9.1 (2026-10-23)
 
 - Releases PostgreSQL migration connections after UP, DOWN and force operations, including failures, without closing the application pool.
